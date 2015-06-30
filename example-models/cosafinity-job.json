@@ -1,0 +1,69 @@
+{
+  "id" : "job4",
+  "description": "drive the weather quota APIs",
+  "defaultProperties": {
+    "scheme": "http",
+    "host": "cosafinity-prod.apigee.net",
+    "headers" : {
+      "Accept" : "application/json"
+    }
+  },
+
+  "geoDistribution" : 1,
+
+  "initialContext" : {
+    "apikeys": [
+      ["rapsE6vMd07qxr8e7s8OG4Tc96YFCDQD", 50],
+      ["FXLEGaOREyU5XLJKGN3FLrib1pxBrEHC", 3]
+      ]
+  },
+
+  "invocationsPerHour" : [
+    44, 37, 40, 32, 40, 39, 40, 54,
+    55, 62, 54, 60, 71, 72, 50, 48,
+    48, 62, 71, 87, 83, 72, 73, 50
+  ],
+
+  "sequences" : [
+    {
+      "iterations" : "Math.floor(Math.random() * 3) + 2",
+      "requests" : [
+        {
+        "imports" : [
+          {
+            "description" : "setup the weighted random selector",
+            "fn" : "function(ctx) {return (ctx.kwrs)? ctx.kwrs : new WeightedRandomSelector(ctx.apikeys);}",
+            "valueRef" : "kwrs"
+          },
+          {
+            "description" : "choose a key",
+            "fn" : "function(ctx) {return ctx.kwrs.select()[0];}",
+            "valueRef" : "apikey"
+          }
+        ],
+          "url" : "/retail/v2/products?apikey={apikey}",
+          "method" : "get",
+          "delayBefore" : 3,
+          "extracts" : [
+          {
+            "description" : "slurp the products",
+            "fn" : "function(payload) {return payload.entities;}",
+            "valueRef" : "products"
+          }
+          ]
+        },
+        {
+        "imports" : [
+          {
+            "description" : "select a random product",
+            "fn" : "function(ctx) {return ctx.products[Math.floor(Math.random() * ctx.products.length)];}",
+            "valueRef" : "product"
+          }
+        ],
+          "url" : "/retail/v2/products/{product.name}?apikey={apikey}",
+          "method" : "get",
+          "delayBefore" : 3
+        }]
+    }
+  ]
+}

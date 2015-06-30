@@ -1,0 +1,64 @@
+{
+  "id": "cosafinity",
+  "description": "Drives Load for Cosafinity",
+  "defaultProperties": {
+    "scheme": "http",
+    "host": "cosafinity-prod.apigee.net",
+    "headers": {
+      "Accept": "application/json"
+    }
+  },
+  "geoDistribution": 1,
+  "initialContext": {
+    "apikeys": [
+      ["rapsE6vMd07qxr8e7s8OG4Tc96YFCDQD", 70],
+      ["chl13otH68kdPCKzsIR038kUhUI9AAp2", 70],
+      ["Iga28GANCNb6Rn2kVMMLwtnCGGshaw4L", 15],
+      ["9pQcBHzDol0GvIBevtbr7s6gJUwknKR6", 35],
+      ["BvyzuJWyJu6zNNvR37gCqy0XjBgm1Ll0", 54],
+      ["HJ7pC06GWUSGtz5UcVsmvvk3yfxvkTbx", 20]
+    ],
+    "catalogName": ["Baby", "Appliances", "Clothing", "Gifts", "Computers", "Automotive"]
+  },
+  "invocationsPerHour": [
+    888, 740, 798, 660, 810, 781, 790, 1070,
+    1101, 1240, 1079, 1198, 1424, 1444, 1000, 960,
+    948, 1048, 1414, 1736, 1666, 1450, 1460, 1000],
+  "sequences": [{
+    "iterations": "Math.floor(Math.random() * 2) + 3",
+    "requests": [{
+      "imports": [{
+        "description": "setup the weighted random selector",
+        "fn": "function(ctx) {return (ctx.kwrs)? ctx.kwrs : new WeightedRandomSelector(ctx.apikeys);}",
+        "valueRef": "kwrs"
+      }, {
+        "description": "choose a key",
+        "fn": "function(ctx) {return ctx.kwrs.select()[0];}",
+        "valueRef": "apikey"
+      }, {
+        "description": "choose a catalog",
+        "fn": "function(ctx) {return  ctx.catalogName[Math.floor(Math.random() * ctx.catalogName.length)];}",
+        "valueRef": "catalog"
+      }],
+      "url": "/retail/v2/catalogs/{catalog}/products?apikey={apikey}",
+      "method": "get",
+      "delayBefore": 0
+    }, {
+      "url": "/retail/v2/catalogs?apikey={apikey}",
+      "method": "get",
+      "delayBefore": 0
+    }, {
+      "url": "/retail/v2/products?apikey={apikey}",
+      "method": "get",
+      "delayBefore": 0
+    }, {
+      "url": "/retail/v2/offers/offer1?apikey={apikey}",
+      "method": "get",
+      "delayBefore": 0
+    }, {
+      "url": "/retail/v2/stores?apikey={apikey}",
+      "method": "get",
+      "delayBefore": 0
+    }]
+  }]
+}

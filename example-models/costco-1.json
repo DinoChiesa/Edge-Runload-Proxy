@@ -1,0 +1,109 @@
+{
+  "id" : "costco-job1",
+  "description": "drive the costco WH API",
+  "defaultProperties": {
+    "scheme": "http",
+    "host": "pbhogill-costco-test.apigee.net",
+    "port": "80",
+    "headers" : {
+      "Accept" : "application/json"
+    }
+  },
+
+  "geoDistribution" : 1,
+
+  "initialContext" : {
+    "keys" : [
+      ["SQsCiZZR1pAHtF0CXFhiEIGSAzbgRe15", 20],
+      ["J8Pm7MMqQCluFonA8rrW95raqOlY7TU5", 43],
+      ["tWODR9HqDiVVP8t18qJoehpjAudcaert", 13],
+      ["9BI0OgG0OlnKwa1mnxN2YG9vvj6GO8dj", 55]
+    ],
+    "environments" : [
+      ["test", 35],
+      ["prod", 68]
+    ]
+  },
+
+  "invocationsPerHour" : [
+    888, 974, 680, 864, 803, 787, 800, 1080,
+    1100, 1240, 1081, 1188, 1420, 1440, 1000, 960,
+    968, 1240, 1402, 1740, 1660, 1405, 1406, 1034
+  ],
+
+  "variationByDayOfWeek" : [
+    0.45, 0.5, 0.55, 0.6, 0.4, 0.62343, 0.55
+  ],
+
+  "sequences" : [
+    {
+      "iterations" : "1",
+      "requests" : [
+        {
+          "imports" : [
+            {
+              "description" : "setup the weighted random selector for keys",
+              "fn" : "function(ctx) {return (ctx.kwrs)? ctx.kwrs : new WeightedRandomSelector(ctx.keys);}",
+              "valueRef" : "kwrs"
+            },
+            {
+              "description" : "setup the weighted random selector for env",
+              "fn" : "function(ctx) {return (ctx.ewrs)? ctx.ewrs : new WeightedRandomSelector(ctx.environments);}",
+              "valueRef" : "ewrs"
+            },
+            {
+              "description" : "choose a key",
+              "fn" : "function(ctx) {return ctx.kwrs.select()[0];}",
+              "valueRef" : "apikey"
+            },
+            {
+              "description" : "choose an environment",
+              "fn" : "function(ctx) {return ctx.ewrs.select()[0];}",
+              "valueRef" : "env"
+            }
+          ],
+          "url" : "http://pbhogill-costco-{env}.apigee.net/v1/locator/doc",
+          "method" : "get",
+          "headers" : {
+            "X-costco-key" : "{apikey}"
+          },
+          "delayBefore" : 0
+        },
+        {
+          "url" : "http://pbhogill-costco-{env}.apigee.net/v1/locator/warehouses",
+          "method" : "get",
+          "headers" : {
+            "X-costco-key" : "{apikey}"
+          },
+          "delayBefore" : 0,
+          "extracts" : [
+            {
+              "description" : "extract the Warehouse IDs",
+              "fn" : "function(payload,hdrs,ctx) {return payload.warehouses.map(function(val,ix){return val.warehouseId;});}",
+              "valueRef" : "warehouses"
+            }
+          ]
+        }
+      ]
+    },{
+      "iterations" : "Math.floor(Math.random() * 5) + 3",
+      "requests" : [
+        {
+          "imports" : [
+            {
+              "description" : "choose a warehouse",
+              "fn" : "function(ctx) {return Math.floor(Math.random() * ctx.warehouses.length);}",
+              "valueRef" : "whnum"
+            }
+          ],
+          "url" : "http://pbhogill-costco-{env}.apigee.net/v1/locator/warehouses/{warehouses[whnum]}",
+          "method" : "get",
+          "headers" : {
+            "X-costco-key" : "{apikey}"
+          },
+          "delayBefore" : 0
+        }
+      ]
+    }
+  ]
+}

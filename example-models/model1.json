@@ -1,0 +1,66 @@
+{
+  "id" : "job5",
+  "description": "drive the EXPE test APIs",
+  "defaultProperties": {
+    "scheme": "http",
+    "host": "54.184.90.123",
+    "port": "9001",
+    "headers" : {
+      "Accept" : "application/json"
+    }
+  },
+
+  "geoDistribution" : 1,
+
+  "initialContext" : {
+    "client_id" : "4ounHSPgADYrISWYalCGKZuxAl0jCOJ9",
+    "client_secret" : "85XDwsFeKGjzMQ6t"
+  },
+
+  "invocationsPerHour" : [
+    888, 974, 680, 864, 803, 787, 800, 1080,
+    1100, 1240, 1081, 1188, 1420, 1440, 1000, 960,
+    968, 1240, 1402, 1740, 1660, 1405, 1406, 1034
+  ],
+
+  "sequences" : [
+    {
+      "iterations" : "1",
+      "requests" : [
+        {
+          "url" : "/oauth/client_credentials/accesstoken",
+          "method" : "post",
+          "delayBefore" : 0,
+          "headers" : {
+            "accept" : "application/json",
+            "content-type" : "application/json"
+          },
+          "payload": {
+            "grant_type" : "client_credentials",
+            "client_id" : "{client_id}",
+            "client_secret" : "{client_secret}"
+          },
+          "extracts" : [
+            {
+              "description" : "extract the oauth token",
+              "fn" : "function(obj) {return obj.access_token;}",
+              "valueRef" : "oauth_bearer_token"
+            }
+          ]
+        }
+      ]
+    },{
+      "iterations" : "Math.floor(Math.random() * 5) + 3",
+      "requests" : [
+        {
+          "url" : "/v1/loopback/pass",
+          "method" : "get",
+          "headers" : {
+            "authorization" : "Bearer {oauth_bearer_token}"
+          },
+          "delayBefore" : 0
+        }
+      ]
+    }
+  ]
+}
