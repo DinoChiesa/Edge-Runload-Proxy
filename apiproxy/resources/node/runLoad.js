@@ -65,7 +65,7 @@
 //    10 = max logging
 //
 // created: Wed Jul 17 18:42:20 2013
-// last saved: <2015-June-29 22:29:22>
+// last saved: <2015-July-01 14:11:35>
 // ------------------------------------------------------------------
 //
 // Copyright © 2013, 2014, 2015 Dino Chiesa and Apigee Corp
@@ -96,7 +96,7 @@ var assert = require('assert'),
     gModel,
     gDefaultLogLevel = 2,
     gStatus = {
-      loadGenVersion: "Monday, 29 June 2015, 22:29",
+      loadGenVersion: "Wednesday,  1 July 2015, 14:11",
       times : {
         start : (new Date()).toString(),
         lastRun : (new Date()).toString(),
@@ -894,7 +894,7 @@ function setWakeup(context) {
       job.variationByDayOfWeek.length == 7 &&
       job.variationByDayOfWeek[currentDayOfWeek] &&
       job.variationByDayOfWeek[currentDayOfWeek] > 0 &&
-      job.variationByDayOfWeek[currentDayOfWeek] <= 2) {
+      job.variationByDayOfWeek[currentDayOfWeek] <= 10) {
     log.write(5, jobid + ' variation: ' + job.variationByDayOfWeek[currentDayOfWeek]);
     runsPerHour = Math.floor(runsPerHour * job.variationByDayOfWeek[currentDayOfWeek]);
   }

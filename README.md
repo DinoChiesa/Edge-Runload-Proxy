@@ -638,7 +638,7 @@ Consider this example:
       ],
 
       "variationByDayOfWeek" : [
-        0.9, 1.0, 1.1, 1.2, 0.8, 1.3, 1.1
+        0.9, 1.0, 1.1, 2.1, 1.8, 3.1, 1.1
       ],
 
       ....
@@ -650,7 +650,7 @@ of calls to make is multiplied by the Nth member of this array, where N
 is the day of the week. (0= Sunday, 1= Monday, etc.)  This allows the
 load to vary over the course of the week, to make the analytics charts
 look more interesting. Each coefficient should be a floating point
-number between 0 and 2. If it fall out of that range, then the script
+number between 0 and 10. If it falls out of that range, then the script
 will use 1. 
 
 
