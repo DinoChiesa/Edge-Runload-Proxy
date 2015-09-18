@@ -96,7 +96,7 @@ var assert = require('assert'),
     gModel,
     gDefaultLogLevel = 2,
     gStatus = {
-      loadGenVersion: "Wednesday,  1 July 2015, 14:11",
+      loadGenVersion: 'Thursday, 17 September 2015, 18:34',
       times : {
         start : (new Date()).toString(),
         lastRun : (new Date()).toString(),
@@ -104,7 +104,7 @@ var assert = require('assert'),
       nRequests : 0,
       jobId : '',
       description : '',
-      status : "none",
+      status : 'none',
       responseCounts : { total: 0 }
     },
     globals = {},
@@ -310,11 +310,13 @@ function chooseRandomIpFromRecord(rec) {
 
 
 function contriveIpAddress(context) {
-  var city, ql, options, deferred, choose = function() {
-        context.job.contrivedIp = chooseRandomIpFromRecord(globals.cities[city.name]);
-        context.job.chosenCity = city.name;
-        log.write(8,'contriveIpAddress: ' + city.name + ' ' + context.job.contrivedIp);
-      };
+  var city, ql, options, deferred;
+
+  function choose(cityData) {
+    context.job.contrivedIp = chooseRandomIpFromRecord(cityData);
+    context.job.chosenCity = city.name;
+    log.write(8,'contriveIpAddress: ' + city.name + ' ' + context.job.contrivedIp);
+  }
 
   log.write(10,'contriveIpAddress');
   if (!globals.citySelector) {
@@ -327,7 +329,7 @@ function contriveIpAddress(context) {
 
   if (globals.hasOwnProperty('cities') && globals.cities[city.name]) {
     // the selected city has been cached.
-    choose();
+    choose(globals.cities[city.name]);
     return context;
   }
 
@@ -360,9 +362,10 @@ function contriveIpAddress(context) {
         }
       }
       if (body.entities && body.entities[0]) {
-        if (!globals.cities) {globals.cities = {}; }
-        globals.cities[city.name] = body.entities[0];
-        choose();
+        if (!globals.cities) { globals.cities = {}; }
+        // do not cache this data - see APIRT-1974
+        //globals.cities[city.name] = body.entities[0];
+        choose(body.entities[0]);
       }
       else {
         log.write(2,'contriveIpAddress: no body entities');
@@ -415,27 +418,35 @@ function evalTemplate(ctx, code) {
   return result;
 }
 
-// expandEmbeddedTemplates: walks through an object, replacing each embedded
-// template as appropriate. This is used to expand a templated payload.
+
+/**
+* Replace templates in a single string.
+**/
+var rt_re1 = new RegExp('(.*)(?!{{){([^{}]+)(?!}})}(.*)'),
+    rt_re2 = new RegExp('(.*){{([^{}]+)}}(.*)'); // for double-curlies
+function replaceTemplatesInString(ctx, s) {
+  var newVal, match;
+
+  for (newVal = s, match = rt_re1.exec(newVal); match; match = rt_re1.exec(newVal)){
+    newVal = match[1] + evalTemplate(ctx, match[2]) + match[3];
+  }
+  for (match = rt_re2.exec(newVal); match; match = rt_re2.exec(newVal)){
+    newVal = match[1] + '{' + match[2] + '}' + match[3];
+  }
+  return newVal;
+}
+
+
+/**
+* expandEmbeddedTemplates walks through an object, replacing each embedded
+* template as appropriate. This is used to expand a templated payload.
+**/
 function expandEmbeddedTemplates(ctx, obj) {
   var newObj,
       type = Object.prototype.toString.call(obj), x, i;
 
-  function replaceTemplatesInString(s) {
-    var newVal, match,
-      re1 = new RegExp('(.*)(?!{{){([^{}]+)(?!}})}(.*)'),
-      re2 = new RegExp('(.*){{([^{}]+)}}(.*)'); // for double-curlies
-    for (newVal = s, match = re1.exec(newVal); match; match = re1.exec(newVal)){
-      newVal = match[1] + evalTemplate(ctx, match[2]) + match[3];
-    }
-    for (match = re2.exec(newVal); match; match = re2.exec(newVal)){
-      newVal = match[1] + '{' + match[2] + '}' + match[3];
-    }
-    return newVal;
-  }
-
   if (type === "[object String]") {
-    newObj = replaceTemplatesInString(obj);
+    newObj = replaceTemplatesInString(ctx, obj);
   }
   else if (type === "[object Array]") {
     // iterate
@@ -451,7 +462,7 @@ function expandEmbeddedTemplates(ctx, obj) {
       var type = Object.prototype.toString.call(obj[prop]);
         if (type === "[object String]") {
           // replace all templates in a string
-          newObj[prop] = replaceTemplatesInString(obj[prop]);
+          newObj[prop] = replaceTemplatesInString(ctx, obj[prop]);
         }
         else if (type === "[object Object]" || type === "[object Array]") {
           // recurse
@@ -674,7 +685,7 @@ function invokeOneRequest(context) {
         if (!reqOptions.headers['content-type']) {
           reqOptions.headers['content-type'] = 'application/x-www-form-urlencoded';
         }
-      } 
+      }
       else {
         // in this case the content-type header gets set implicitly by the library
         reqOptions.json = actualPayload;
@@ -1126,7 +1137,7 @@ app.post('/control', function(request, response) {
 // default behavior
 app.all(/^\/.*/, function(request, response) {
   response.header('Content-Type', 'application/json');
-  response.send(404, '{ "status" : "This is not the server you\'re looking for." }\n');
+  response.send(404, '{ "message" : "This is not the server you\'re looking for." }\n');
 });
 
 

@@ -318,11 +318,14 @@ iterations
 
 delayBetweenIterations
 
-    This can be a pure numeric,
-    interpreted as milliseconds to delay, or a string which holds a
-    Javascript expression that resolves to a numeric; for example,
-    "Math.floor(Math.random() * 500) + 750". delayBetweenIterations defaults
-    to zero. 
+    A sequence consists of a set of requests, and each sequence can be
+    repeated N times. Between iterations, runload may delay, this amount
+    of time.  This number can be a pure numeric, interpreted as
+    milliseconds to delay between iterations of a sequence, or a string
+    which holds a Javascript expression that resolves to a numeric; for
+    example, "Math.floor(Math.random() * 500) +
+    750". delayBetweenIterations defaults to zero. This quantity is
+    obviously irrelevant if the number of iterations is 1 (or default). 
 
 
 If you provide bad code in either of iterations or
