@@ -273,7 +273,7 @@ a random number of iterations, delayBetweenIterations, and geoDistribution.
   midnight begins the zero hour. These numbers don't specify the
   desired number of requests, it's the desired number of job runs,
   each of which may have multiple sequences, each of which has one or
-  more requests.
+  more requests.  
   
   If you set this to 60 for a particular hour, runload will try to run
   60 job runs for that hour, one per minute. The runLoad script can't
@@ -283,7 +283,7 @@ a random number of iterations, delayBetweenIterations, and geoDistribution.
   job before it needs to start the second. But the script runs the
   jobs serial fashion: the first job must complete before runload
   starts the second. So in this case, jobs will run "as fast as they
-  can", but it won't reach 60 jobs per hour.
+  can", but it won't reach 60 jobs per hour.  
   
   How many invocations should you run? Hard to say. If you run 60 per
   hour, and each job implies 8 requests, then you will get 8 requests per
