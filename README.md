@@ -275,20 +275,20 @@ a random number of iterations, delayBetweenIterations, and geoDistribution.
   each of which may have multiple sequences, each of which has one or
   more requests.  
   
-  If you set this to 60 for a particular hour, runload will try to run
-  60 job runs for that hour, one per minute. The runLoad script can't
-  guarantee that it will run this number of jobs. For example, suppose
-  one job run takes more than 60 seconds to run. If you then specify
-  60 jobs per hour as a target, the script will not finish the first
-  job before it needs to start the second. But the script runs the
-  jobs serial fashion: the first job must complete before runload
-  starts the second. So in this case, jobs will run "as fast as they
-  can", but it won't reach 60 jobs per hour.  
-  
-  How many invocations should you run? Hard to say. If you run 60 per
-  hour, and each job implies 8 requests, then you will get 8 requests per
-  minute, or about 0.13 transactions per second. Not very much. You
-  can do the math yourself for your own job description.
+    If you set this to 60 for a particular hour, runload will try to run
+    60 job runs for that hour, one per minute. The runLoad script can't
+    guarantee that it will run this number of jobs. For example, suppose
+    one job run takes more than 60 seconds to run. If you then specify
+    60 jobs per hour as a target, the script will not finish the first
+    job before it needs to start the second. But the script runs the
+    jobs serial fashion: the first job must complete before runload
+    starts the second. So in this case, jobs will run "as fast as they
+    can", but it won't reach 60 jobs per hour.  
+
+    How many invocations should you run? Hard to say. If you run 60 per
+    hour, and each job implies 8 requests, then you will get 8 requests per
+    minute, or about 0.13 transactions per second. Not very much. You
+    can do the math yourself for your own job description.
 
 * **geoDistribution**
   The geoDistribution property is a single truthy value, which
