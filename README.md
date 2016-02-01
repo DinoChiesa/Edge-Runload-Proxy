@@ -1,7 +1,7 @@
 runload-proxy
 ==============
 
-Monday, 29 June 2015, 23:02
+Monday,  1 February 2016, 14:03
 
 This is an Apigee Edge proxy that lets you generate and run load against
 a different API.
@@ -32,7 +32,7 @@ To use:
      edit the model.json file to specify the job to run. 
 
 
-  3. packup the bundle and deploy it.  You can use the Edge UI for this
+  2. packup the bundle and deploy it.  You can use the Edge UI for this
      purpose , or a tool like pushapi from
      https://github.com/carloseberhardt/apiploy, or your own tool.
 
@@ -103,7 +103,7 @@ the json payload gets its values from the context. If you wanted to use a
 context value to construct a url path, you could do it with a template,
 this way:
 
-   /v1/test/{href} 
+    /v1/test/{href} 
 
 runload will replace {href} with the value of the href property from the
 context.
@@ -117,22 +117,19 @@ for that request.
 
 Notes on the properties in that job description: 
 
-name
+* **name**  
+  This is used in the job logging output, and also for job control
+  inside Apigee Edge. The script will access the Edge cache, using a
+  key name which is derived from this job name.  Therefore, use a
+  unique name, a string, no spaces. (don't use 'job1')
 
-    This is used in the job logging output, and also for job control
-    inside Apigee Edge. The script will access the Edge cache, using a
-    key name which is derived from this job name.  Therefore, use a
-    unique name, a string, no spaces. (don't use 'job1')
+* **description**  
+  Used for diagnostic purposes only. The script emits this description
+  when launching the job. 
 
-description
-
-    Used for diagnostic purposes only. The script emits this description
-    when launching the job. 
-
-defaultProperties
-
-    These are all obvious. There are no other default properties other
-    than those shown in the example. 
+* **defaultProperties**
+  These are all obvious. There are no other default properties other
+  than those shown in the example. 
 
 
 ---
@@ -258,74 +255,69 @@ Consider this job definition:
 This job definition adds a few properties: extracts, invocationsPerHour, 
 a random number of iterations, delayBetweenIterations, and geoDistribution. 
 
-extracts
+* **extracts**  
+  After receiving the response, runLoad calls the functions provided
+  in the 'extracts' array, passing the response. The return values of
+  those functions get placed as additional values in the job context,
+  using the valueRef name. These new values can subsequently be
+  referenced as context values via templates, as described
+  previously. In this example, the oauth_bearer_token is extracted and
+  inserted as a bearer token in all subsequent requests. You can get
+  pretty fancy with the extracts, using them to specify values in the
+  payload or the url path or headers.
 
-    After receiving the response, runLoad calls the functions provided
-    in the 'extracts' array, passing the response. The return values of
-    those functions get placed as additional values in the job context,
-    using the valueRef name. These new values can subsequently be
-    referenced as context values via templates, as described
-    previously. In this example, the oauth_bearer_token is extracted and
-    inserted as a bearer token in all subsequent requests. You can get
-    pretty fancy with the extracts, using them to specify values in the
-    payload or the url path or headers.
+* **invocationsPerHour**  
+  The top-level property named "invocationsPerHour" holds an array of
+  24 numbers. Each number tells the load runner the number of cycles
+  of the job to run for that particular hour of the day, where
+  midnight begins the zero hour. These numbers don't specify the
+  desired number of requests, it's the desired number of job runs,
+  each of which may have multiple sequences, each of which has one or
+  more requests.
+  
+  If you set this to 60 for a particular hour, runload will try to run
+  60 job runs for that hour, one per minute. The runLoad script can't
+  guarantee that it will run this number of jobs. For example, suppose
+  one job run takes more than 60 seconds to run. If you then specify
+  60 jobs per hour as a target, the script will not finish the first
+  job before it needs to start the second. But the script runs the
+  jobs serial fashion: the first job must complete before runload
+  starts the second. So in this case, jobs will run "as fast as they
+  can", but it won't reach 60 jobs per hour.
+  
+  How many invocations should you run? Hard to say. If you run 60 per
+  hour, and each job implies 8 requests, then you will get 8 requests per
+  minute, or about 0.13 transactions per second. Not very much. You
+  can do the math yourself for your own job description.
 
-invocationsPerHour 
+* **geoDistribution**
+  The geoDistribution property is a single truthy value, which
+  specifies whether the runload script should simulate geo-distributed
+  load as the job runs, via the X-Forwarded-For header.  Set this
+  property to zero or false in the job definition if you do not want
+  geo-distributed load. If you omit the property, or set it to a
+  truthy value (true, 1, or any string), you get the default behavior,
+  which is an X-forwarded-for header that simulates geo distributed
+  load.  The runLoad script does this by calling out to two lists in
+  App Services to select cities and IP addresses for those cities.
 
-    The top-level property named "invocationsPerHour" holds an array of
-    24 numbers. Each number tells the load runner the number of cycles
-    of the job to run for that particular hour of the day, where
-    midnight begins the zero hour. These numbers don't specify the
-    desired number of requests, it's the desired number of job runs,
-    each of which may have multiple sequences, each of which has one or
-    more requests.
+* **iterations**  
+  This job definition also includes multiple sequences with multiple
+  requests in each. The second sequence in this example shows how to
+  specify a varying number of iterations. You can use any javascript
+  expression that resolves to a number. For example,
+  "Math.floor(Math.random() * 3) + 2". If you omit the iterations
+  property, it defaults to 1.
 
-    If you set this to 60 for a particular hour, runload will try to run
-    60 job runs for that hour, one per minute. The runLoad script can't
-    guarantee that it will run this number of jobs. For example, suppose
-    one job run takes more than 60 seconds to run. If you then specify
-    60 jobs per hour as a target, the script will not finish the first
-    job before it needs to start the second. But the script runs the
-    jobs serial fashion: the first job must complete before runload
-    starts the second. So in this case, jobs will run "as fast as they
-    can", but it won't reach 60 jobs per hour.
-
-    How many invocations should you run? Hard to say. If you run 60 per
-    hour, and each job implies 8 requests, then you will get 8 requests per
-    minute, or about 0.13 transactions per second. Not very much. You
-    can do the math yourself for your own job description.
-
-geoDistribution
-
-    The geoDistribution property is a single truthy value, which
-    specifies whether the runload script should simulate geo-distributed
-    load as the job runs, via the X-Forwarded-For header.  Set this
-    property to zero or false in the job definition if you do not want
-    geo-distributed load. If you omit the property, or set it to a
-    truthy value (true, 1, or any string), you get the default behavior,
-    which is an X-forwarded-for header that simulates geo distributed
-    load.  The runLoad script does this by calling out to two lists in
-    App Services to select cities and IP addresses for those cities.
-
-iterations
-
-    This job definition also includes multiple sequences with multiple
-    requests in each. The second sequence in this example shows how to
-    specify a varying number of iterations. You can use any javascript
-    expression that resolves to a number. For example,
-    "Math.floor(Math.random() * 3) + 2". If you omit the iterations
-    property, it defaults to 1.
-
-delayBetweenIterations
-
-    A sequence consists of a set of requests, and each sequence can be
-    repeated N times. Between iterations, runload may delay, this amount
-    of time.  This number can be a pure numeric, interpreted as
-    milliseconds to delay between iterations of a sequence, or a string
-    which holds a Javascript expression that resolves to a numeric; for
-    example, "Math.floor(Math.random() * 500) +
-    750". delayBetweenIterations defaults to zero. This quantity is
-    obviously irrelevant if the number of iterations is 1 (or default). 
+* **delayBetweenIterations**  
+  A sequence consists of a set of requests, and each sequence can be
+  repeated N times. Between iterations, runload may delay, this amount
+  of time.  This number can be a pure numeric, interpreted as
+  milliseconds to delay between iterations of a sequence, or a string
+  which holds a Javascript expression that resolves to a numeric; for
+  example, "Math.floor(Math.random() * 500) +
+  750". delayBetweenIterations defaults to zero. This quantity is
+  obviously irrelevant if the number of iterations is 1 (or default). 
 
 
 If you provide bad code in either of iterations or
@@ -414,14 +406,14 @@ within a template. In the simple case, the thing between the curlies
 is just the name of a property in the context. In this case though, the
 expression between the curlies is
 
-Base64.encode(creds[credNum].username + ':' + creds[credNum].password)
+    Base64.encode(creds[credNum].username + ':' + creds[credNum].password)
 
 This expression gets wrapped into a function, which is evaluated at
 runtime. In this case it will result in a function that looks like: 
 
-function (creds, credNum) {
-  return Base64.encode(creds[credNum].username + ':' + creds[credNum].password);
-}
+    function (creds, credNum) {
+      return Base64.encode(creds[credNum].username + ':' + creds[credNum].password);
+    }
 
 You can get as complex as you like with the expression. The function
 gets all the context values as named parameters (eg: creds, credNum), so
@@ -661,20 +653,20 @@ will use 1.
 Functions and Objects available to templates
 ================================
 
-randomName() - fn, returns a given name with a number suffix. Examples: 
-"Lewis-8938", "Mary-123". 
+* **randomName()** - fn, returns a given name with a number suffix. Examples: 
+  "Lewis-8938", "Mary-123". 
 
-selectGivenName() - fn, returns a given name. ex: "Lewis", "Jin", "Mary". 
+* **selectGivenName()** - fn, returns a given name. ex: "Lewis", "Jin", "Mary". 
 
-WeightedRandomSelector - object. The constructor accepts an array of
-pairs. The first element in each pair is a value, the second is a
-weight. This object has just one method, select(). Call it to get a
-value from the list of pairs, selected based on the weightings.  You can
-use this to vary the key usage, or whatever. 
+* **WeightedRandomSelector** - object. The constructor accepts an array of
+  pairs. The first element in each pair is a value, the second is a
+  weight. This object has just one method, select(). Call it to get a
+  value from the list of pairs, selected based on the weightings.  You can
+  use this to vary the key usage, or whatever. 
 
-Base64 - object. Includes 2 functions: encode() and decode(). They do 
-what you think they should. You can use this to produce an HTTP Basic
-Auth header in an outbound request. 
+* **Base64** - object. Includes 2 functions: encode() and decode(). They do 
+  what you think they should. You can use this to produce an HTTP Basic
+  Auth header in an outbound request. 
 
 
 Running as a server
@@ -690,12 +682,15 @@ Also, there is an API exposed by this nodejs script.
 
 You can temporarily stop and start load like this: 
 
-  curl -X POST http://cass1-test.apigee.net/runload1/control  -d 'action=start'
-  curl -X POST http://cass1-test.apigee.net/runload1/control  -d 'action=stop
+
+    curl -X POST http://cass1-test.apigee.net/runload1/control  -d 'action=start'
+
+
+    curl -X POST http://cass1-test.apigee.net/runload1/control  -d 'action=stop
 
 And you can inquire status like this:
 
-  curl -X GET http://cass1-test.apigee.net/runload1/status
+    curl -X GET http://cass1-test.apigee.net/runload1/status
 
 
 The /status request returns information only for the MP you have
