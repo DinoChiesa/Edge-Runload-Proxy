@@ -222,6 +222,16 @@ function startsWith (str, frag){
   return str && (str.slice(0, frag.length) == frag);
 }
 
+function dayNumberToName(name) {
+  var map = [ 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday' ],
+      n = name.toLowerCase(),
+      ix = map.indexOf(n);
+  if (ix < 0) {
+    ix = map.map(function(s){return s.substring(0, 3);}).indexOf(n);
+  }
+  return ix;
+}
+
 
 // function cacheKey(httpRequest) {
 //   var varnames = [ 'apiproxy.name', 'apiproxy.revision' ],
@@ -900,14 +910,42 @@ function setWakeup(context) {
   log.write(5, jobid + ' ' + runsPerHour + ' initial runs per hour');
 
   // load variation by day of week
-  if (job.variationByDayOfWeek &&
-      job.variationByDayOfWeek.length &&
-      job.variationByDayOfWeek.length == 7 &&
-      job.variationByDayOfWeek[currentDayOfWeek] &&
-      job.variationByDayOfWeek[currentDayOfWeek] > 0 &&
-      job.variationByDayOfWeek[currentDayOfWeek] <= 10) {
-    log.write(5, jobid + ' variation: ' + job.variationByDayOfWeek[currentDayOfWeek]);
-    runsPerHour = Math.floor(runsPerHour * job.variationByDayOfWeek[currentDayOfWeek]);
+  // if (job.variationByDayOfWeek &&
+  //     job.variationByDayOfWeek.length &&
+  //     job.variationByDayOfWeek.length == 7 &&
+  //     job.variationByDayOfWeek[currentDayOfWeek] &&
+  //     job.variationByDayOfWeek[currentDayOfWeek] > 0 &&
+  //     job.variationByDayOfWeek[currentDayOfWeek] <= 10) {
+  //   log.write(5, jobid + ' variation: ' + job.variationByDayOfWeek[currentDayOfWeek]);
+  //   runsPerHour = Math.floor(runsPerHour * job.variationByDayOfWeek[currentDayOfWeek]);
+  // }
+
+  if (job.variationByDayOfWeek) {
+    var vtype = Object.prototype.toString.call(job.variationByDayOfWeek);
+    if (vtype === "[object Array]") {
+      if (job.variationByDayOfWeek.length &&
+        job.variationByDayOfWeek.length == 7 &&
+        job.variationByDayOfWeek[currentDayOfWeek] &&
+        job.variationByDayOfWeek[currentDayOfWeek] > 0 &&
+        job.variationByDayOfWeek[currentDayOfWeek] <= 10) {
+        log.write(5, jobid + ' variation: ' + job.variationByDayOfWeek[currentDayOfWeek]);
+        runsPerHour = Math.floor(runsPerHour * job.variationByDayOfWeek[currentDayOfWeek]);
+      }
+      else if (vtype === "[object Object]") {
+        var dayName = dayNumberToName(currentDayOfWeek);
+        if (dayName >=0 &&
+            job.variationByDayOfWeek[dayName] > 0 &&
+            job.variationByDayOfWeek[dayName] <= 10) {
+          log.write(5, jobid + ' variation: ' + job.variationByDayOfWeek[dayName]);
+          runsPerHour = Math.floor(runsPerHour * job.variationByDayOfWeek[dayName]);
+        }
+        else {
+          log.write(2, jobid + ' variationByDayOfWeek seems wrong: ' + dayName);
+        }
+    }
+    else {
+      log.write(2, jobid + ' variationByDayOfWeek seems wrong');
+    }
   }
 
   runsPerHour = Math.floor(runsPerHour);

@@ -648,6 +648,19 @@ look more interesting. Each coefficient should be a floating point
 number between 0 and 10. If it falls out of that range, then the script
 will use 1. 
 
+If you like, you can specify a hash here, using names of the days as
+property names. The following is equivalent to the above  variationByDayOfWeek setting :
+
+      "variationByDayOfWeek" : {
+        'Sunday' : 0.9, 
+        'Monday' : 1.0,
+        'Tuesday' : 1.1, 
+        'Wednesday' : 2.1, 
+        'Thursday' : 1.8, 
+        'Friday' : 3.1, 
+        'Saturday' : 1.1
+      },
+
 
 
 Functions and Objects available to templates
