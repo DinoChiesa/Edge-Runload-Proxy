@@ -845,12 +845,13 @@ function initializeJobRun(context) {
 
   gStatus.jobId = context.job.id || "-none-";
   gStatus.description = context.job.description || "-none-";
-  gStatus.loglevel = context.job.loglevel || gDefaultLogLevel;
 
-  // on initial startup, put the loglevel into the cache
-  cache.put(gLoglevelCacheKey, '' + gStatus.loglevel, 18640000, function(e) {});
-
-  // and put the run status into the cache as well.
+  // on initial startup, set loglevel and put it into the cache
+  if (!context.continuing) {
+    gStatus.loglevel = context.job.loglevel || gDefaultLogLevel;
+    cache.put(gLoglevelCacheKey, '' + gStatus.loglevel, 18640000, function(e) {});
+  }
+  // put the run status into the cache.
   // (deploy implies start running)
   cache.put(gStatusCacheKey, "running", 8640000, function(e){});
 
@@ -1005,7 +1006,7 @@ function setWakeup(context) {
         gStatus.cachedStatus = value || '-none-';
         if (e || value != "stopped") {
           // failed to get a value, or value is not stopped
-          q({job:job})
+          q({job:job, continuing: true})
             .then(initializeJobRun)
             .done(function(){},
                   function(e){
