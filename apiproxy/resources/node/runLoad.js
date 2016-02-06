@@ -96,7 +96,7 @@ var assert = require('assert'),
     gModel,
     gDefaultLogLevel = 2,
     gStatus = {
-      loadGenVersion: 'Thursday, 17 September 2015, 18:34',
+      loadGenVersion: 'Friday,  5 February 2016, 18:38',
       times : {
         start : (new Date()).toString(),
         lastRun : (new Date()).toString(),
@@ -924,26 +924,31 @@ function setWakeup(context) {
     var vtype = Object.prototype.toString.call(job.variationByDayOfWeek);
     if (vtype === "[object Array]") {
       if (job.variationByDayOfWeek.length &&
-        job.variationByDayOfWeek.length == 7 &&
-        job.variationByDayOfWeek[currentDayOfWeek] &&
-        job.variationByDayOfWeek[currentDayOfWeek] > 0 &&
-        job.variationByDayOfWeek[currentDayOfWeek] <= 10) {
+          job.variationByDayOfWeek.length == 7 &&
+          job.variationByDayOfWeek[currentDayOfWeek] &&
+          job.variationByDayOfWeek[currentDayOfWeek] > 0 &&
+          job.variationByDayOfWeek[currentDayOfWeek] <= 10) {
         log.write(5, jobid + ' variation: ' + job.variationByDayOfWeek[currentDayOfWeek]);
         runsPerHour = Math.floor(runsPerHour * job.variationByDayOfWeek[currentDayOfWeek]);
       }
-      else if (vtype === "[object Object]") {
-        var dayName = dayNumberToName(currentDayOfWeek);
-        if (dayName >=0 &&
-            job.variationByDayOfWeek[dayName] > 0 &&
-            job.variationByDayOfWeek[dayName] <= 10) {
-          log.write(5, jobid + ' variation: ' + job.variationByDayOfWeek[dayName]);
-          runsPerHour = Math.floor(runsPerHour * job.variationByDayOfWeek[dayName]);
-        }
-        else {
-          log.write(2, jobid + ' variationByDayOfWeek seems wrong: ' + dayName);
-        }
+      else {
+        log.write(2, jobid + ' variationByDayOfWeek seems wrong: ' + dayName);
+      }
+    }
+    else if (vtype === "[object Object]") {
+      var dayName = dayNumberToName(currentDayOfWeek);
+      if (dayName >=0 &&
+          job.variationByDayOfWeek[dayName] > 0 &&
+          job.variationByDayOfWeek[dayName] <= 10) {
+        log.write(5, jobid + ' variation: ' + job.variationByDayOfWeek[dayName]);
+        runsPerHour = Math.floor(runsPerHour * job.variationByDayOfWeek[dayName]);
+      }
+      else {
+        log.write(2, jobid + ' variationByDayOfWeek seems wrong: ' + dayName);
+      }
     }
     else {
+      //neither an array nor a hash.
       log.write(2, jobid + ' variationByDayOfWeek seems wrong');
     }
   }
