@@ -28,6 +28,10 @@
     "iterations": "Math.floor(Math.random() * 2) + 3",
     "requests": [{
       "imports": [{
+        "description": "source for the request",
+        "fn": "function(ctx) {return process.env.APIGEE_ORGANIZATION + ':' + process.env.APIGEE_ENVIRONMENT;}",
+        "valueRef": "source"
+      }, {
         "description": "setup the weighted random selector",
         "fn": "function(ctx) {return (ctx.kwrs)? ctx.kwrs : new WeightedRandomSelector(ctx.apikeys);}",
         "valueRef": "kwrs"
@@ -42,22 +46,27 @@
       }],
       "url": "/retail/v2/catalogs/{catalog}/products?apikey={apikey}",
       "method": "get",
+      "headers" : { "X-runload-source" : "{source}"},
       "delayBefore": 0
     }, {
       "url": "/retail/v2/catalogs?apikey={apikey}",
       "method": "get",
+      "headers" : { "X-runload-source" : "{source}"},
       "delayBefore": 0
     }, {
       "url": "/retail/v2/products?apikey={apikey}",
       "method": "get",
+      "headers" : { "X-runload-source" : "{source}"},
       "delayBefore": 0
     }, {
       "url": "/retail/v2/offers/offer1?apikey={apikey}",
       "method": "get",
+      "headers" : { "X-runload-source" : "{source}"},
       "delayBefore": 0
     }, {
       "url": "/retail/v2/stores?apikey={apikey}",
       "method": "get",
+      "headers" : { "X-runload-source" : "{source}"},
       "delayBefore": 0
     }]
   }]

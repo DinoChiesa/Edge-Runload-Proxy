@@ -663,8 +663,34 @@ property names. The following is equivalent to the above  variationByDayOfWeek s
 
 
 
+Including Source in the synthentic transactions
+================================
+
+It may be a good idea to include the source of the synthetic transaction in the
+request. To do so, you could use this: 
+
+      "sequences" : [
+        {
+          "iterations" : 1,
+          "requests" : [ {
+            "imports" : [
+              {
+                "description": "source for the request",
+                "fn": "function(ctx) {return process.env.APIGEE_ORGANIZATION + ':' + process.env.APIGEE_ENVIRONMENT;}",
+                "valueRef": "source"
+              }],
+            "url" : "/v1/dp/sayhello",
+            "headers" : { "X-runload-source" : "{source}" },
+            "method" : "get"
+          }]
+        }
+      ]
+
+
 Functions and Objects available to templates
 ================================
+
+
 
 * **randomName()** - fn, returns a given name with a number suffix. Examples: 
   "Lewis-8938", "Mary-123". 
@@ -697,7 +723,6 @@ You can temporarily stop and start load like this:
 
 
     curl -X POST http://cass1-test.apigee.net/runload1/control  -d 'action=start'
-
 
     curl -X POST http://cass1-test.apigee.net/runload1/control  -d 'action=stop
 
