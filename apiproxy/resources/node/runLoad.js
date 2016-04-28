@@ -75,6 +75,7 @@
 
 var assert = require('assert'),
     http = require('http'),
+    Base64 = require('./base64'),
     q = require ('q'),
     request = require('./slimNodeHttpClient.js'),
     express = require('express'),
@@ -96,7 +97,7 @@ var assert = require('assert'),
     gModel,
     gDefaultLogLevel = 2,
     gStatus = {
-      loadGenVersion: 'Friday,  5 February 2016, 18:38',
+      loadGenVersion: '20160427-1341',
       times : {
         start : (new Date()).toString(),
         lastRun : (new Date()).toString(),
