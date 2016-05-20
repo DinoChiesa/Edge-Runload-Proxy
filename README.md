@@ -19,18 +19,17 @@ More on that later.
 Pre-requisites
 ========================
 
-Apigee Edge . 
-
+If you want to run the runload within an Apigee Edge proxy, then Apigee Edge  is a pre-req.
+You can run the runload-cli script outside of Apigee Edge, in which case you need node, and must do an `npm install` in order to run it. 
 
 
 Usage
 ========================
 
-To use:
+To use as a proxy:
 
   1. in the apiproxy/resources/node directory, 
      edit the model.json file to specify the job to run. 
-
 
   2. packup the bundle and deploy it.  You can use the Edge UI for this
      purpose , or a tool like pushapi from
@@ -40,6 +39,21 @@ To use:
 The process runs forever. It invokes the API, maybe sleeps a little, and then
 does it again.  To stop it, you can send a /control action=stop request to the
 proxy. (see later in this readme.)  Or, undeploy the proxy. 
+
+
+
+To use as a command-line tool:
+
+  1. in the apiproxy/resources/node directory, 
+     edit the model.json file to specify the job to run. 
+
+  2. `npm install`
+
+  3. `node ./runLoad-cli.js  model.json`
+
+
+The process runs forever. It invokes the API, maybe sleeps a little, and then
+does it again.  To stop it, ctrl-C. 
 
 
 
