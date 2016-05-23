@@ -18,7 +18,7 @@
 //
 //
 // created: Wed Jul 17 18:42:20 2013
-// last saved: <2016-May-20 09:48:04>
+// last saved: <2016-May-23 15:52:54>
 // ------------------------------------------------------------------
 //
 // Copyright © 2013-2016 Dino Chiesa and Apigee Corp
@@ -741,6 +741,7 @@ function runJob(context) {
     else {
       p = p.then(function(ctx){
         log.write('no geo distribution');
+        return ctx;
       });
     }
   }
