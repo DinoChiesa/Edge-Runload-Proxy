@@ -805,6 +805,7 @@ function runJob(context) {
     else {
       p = p.then(function(ctx){
         log.write(3,'no geo distribution');
+        return ctx;
       });
     }
   }
