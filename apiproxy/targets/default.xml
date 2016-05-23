@@ -7,7 +7,7 @@
         <Response/>
     </PreFlow>
     <ScriptTarget>
-        <ResourceURL>node://runLoad.js</ResourceURL>
+        <ResourceURL>node://runLoad-proxy.js</ResourceURL>
         <Properties/>
     </ScriptTarget>
     <PostFlow name="PostFlow">

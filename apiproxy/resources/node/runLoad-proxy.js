@@ -1,4 +1,4 @@
-// runLoad.js
+// runLoad-proxy.js
 // ------------------------------------------------------------------
 //
 // Run a set of REST requests from Node, as specified in a job
@@ -68,7 +68,7 @@
 // last saved: <2015-July-01 14:11:35>
 // ------------------------------------------------------------------
 //
-// Copyright © 2013, 2014, 2015 Dino Chiesa and Apigee Corp
+// Copyright © 2013-2016 Dino Chiesa and Apigee Corp
 // All rights reserved.
 //
 // ------------------------------------------------------------------

@@ -49,7 +49,7 @@ To use as a command-line tool:
 
   2. `npm install`
 
-  3. `node ./runLoad-cli.js  model.json`
+  3. `npm start`
 
 
 The process runs forever. It invokes the API, maybe sleeps a little, and then
