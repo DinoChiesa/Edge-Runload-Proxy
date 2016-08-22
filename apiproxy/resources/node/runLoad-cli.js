@@ -18,7 +18,7 @@
 //
 //
 // created: Wed Jul 17 18:42:20 2013
-// last saved: <2016-May-23 15:52:54>
+// last saved: <2016-June-06 16:56:21>
 // ------------------------------------------------------------------
 //
 // Copyright © 2013-2016 Dino Chiesa and Apigee Corp
@@ -843,7 +843,7 @@ function setWakeup(context) {
 // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 function usage() {
-  console.log("runLoad.js - runs artificial load on an API");
+  console.log("runLoad-cli.js - runs artificial load on an API");
   console.log("usage:");
   console.log("   node ./runLoad-cli.js  <job-definition-filename>");
   console.log();

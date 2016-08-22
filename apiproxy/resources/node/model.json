@@ -8,7 +8,7 @@
       "Accept": "application/json"
     }
   },
-  "geoDistribution": 1,
+  "geoDistribution": 0,
   "initialContext": {
     "apikeys": [
       ["rapsE6vMd07qxr8e7s8OG4Tc96YFCDQD", 70],

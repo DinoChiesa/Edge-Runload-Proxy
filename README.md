@@ -759,3 +759,25 @@ you can generate load on any other org. Also, in the job definition, you
 specify the targets of the requests as URLs, which of course means you could
 define a job that generates load on any system; the target need not be
 running in Apigee Edge.
+
+You can also control the logging level of the agent. like thi:
+
+    curl -X POST http://cass1-test.apigee.net/runload1/control  -d 'action=setlog&loglevel=3'
+
+These are the loglevel values: 
+* 0 = almost no logging
+* 2 = very minimal logging - only wake/sleep and errors
+* 3 = see each API call out.
+* progressively more info
+* 10 = max logging
+
+Possible Errors
+======================
+
+If you see something like this:
+
+```
+*** Error: Cannot find module 'q' Error: Cannot find module 'q' at module.js:340 at module.js:280 at module.js:364 at require (module.js:380) at /organization/environment/api/runLoad.js:76 at module.js:456 at module.js:474 at module.js:356 at module.js:312 at module.js:497 at startup (trireme.js:142) at trireme.js:923
+```
+
+...it's possible you uploaded the runload API proxy with the UI.  In which case you need to call [the Edge Admin API to run `npm install`](http://docs.apigee.com/management/apis/post/organizations/%7Borg_name%7D/apis/%7Bapi_name%7D/revisions/%7Brevision_num%7D/npm-0) to install all the dependencies for the nodejs code.
