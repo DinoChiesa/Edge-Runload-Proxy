@@ -97,7 +97,7 @@ var assert = require('assert'),
     gModel,
     gDefaultLogLevel = 2,
     gStatus = {
-      loadGenVersion: '20160427-1341',
+      loadGenVersion: '20160901-0858',
       times : {
         start : (new Date()).toString(),
         lastRun : (new Date()).toString(),
@@ -646,6 +646,10 @@ function invokeOneRequest(context) {
     reqOptions.method = method;
     reqOptions.timeout = globalTimeout;
     reqOptions.followRedirects = false;
+
+    if (job.defaultProperties.proxy) {
+      reqOptions.proxy = job.defaultProperties.proxy;
+    }
 
     if (isUrl.test(url)) {
       // if it is a complete URL, use it.

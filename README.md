@@ -26,7 +26,7 @@ You can run the runload-cli script outside of Apigee Edge, in which case you nee
 Usage
 ========================
 
-To use as a proxy:
+To use as a apiproxy in Edge:
 
   1. in the apiproxy/resources/node directory, 
      edit the model.json file to specify the job to run. 
@@ -180,6 +180,29 @@ Example of the latter:
               ....
 
 
+
+Using an HTTP Proxy for outbound requests
+--------------------------------
+
+Specify the proxy in a property in defaultProperties, like this:
+
+
+    {
+      "name": "job1",
+      "description": "Login to the Sonoa service",
+      "defaultProperties": {
+        "proxy": "http://72.252.11.84:8080",
+        "scheme": "https",
+        "host": "api.sonoasystems.net",
+        "port": 9001,
+        "headers" : {
+          "Accept" : "application/json",
+          "content-type" : "application/json"
+        }
+      },
+
+
+This should work with HTTP or HTTPS requests.
 
 
 A More Complex Example

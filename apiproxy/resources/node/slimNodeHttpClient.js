@@ -13,7 +13,7 @@
 //     npm install url util stream http https json-stringify-safe
 //
 // created: Fri Aug  2 21:21:03 2013
-// last saved: <2014-May-30 06:56:01>
+// last saved: <2016-September-01 08:37:35>
 // ------------------------------------------------------------------
 //
 // Copyright © 2013 Dino Chiesa
@@ -25,6 +25,7 @@ var http = require('http'),
     https = require('https'),
     stream = require('stream'),
     url = require('url'),
+    HttpsProxyAgent = require('https-proxy-agent'),
     util = require('util'),
     safeStringify = require('json-stringify-safe'),
     isUrl = new RegExp('^https?://[-a-z0-9\\.]+($|/)', 'i'),
@@ -87,9 +88,19 @@ HttpClientRequest.prototype.init = function (options) {
     self.on('complete', self.callback.bind(self, null));
   }
 
+
   if (!self.uri) {
     // this will throw if unhandled but is handleable when in a redirect
     return self.emit('error', new Error("options.uri is a required argument"));
+  }
+
+  if (self.proxy) {
+    var proxyUri = url.parse(self.proxy);
+    if ( ! proxyUri.host) {
+      self.emit('error', new Error('Invalid URI for Proxy "' + url.format(self.proxy) + '"'));
+      return;
+    }
+    self.agent = new HttpsProxyAgent(self.proxy);
   }
 
   if (typeof self.uri == "string") {self.uri = url.parse(self.uri);}
@@ -290,6 +301,7 @@ HttpClientRequest.prototype.start = function () {
   // auth option.  If we don't remove it, we're gonna have a bad time.
   var reqOptions = copy(self);
   delete reqOptions.auth;
+  delete reqOptions.proxy;
 
   debug('make request', self.uri.href);
 

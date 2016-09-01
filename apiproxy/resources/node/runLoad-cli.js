@@ -18,7 +18,7 @@
 //
 //
 // created: Wed Jul 17 18:42:20 2013
-// last saved: <2016-June-06 16:56:21>
+// last saved: <2016-September-01 08:58:46>
 // ------------------------------------------------------------------
 //
 // Copyright © 2013-2016 Dino Chiesa and Apigee Corp
@@ -35,7 +35,7 @@ var assert = require('assert'),
     globalTimeout = 8000, // in ms
     defaultRunsPerHour = 60,
     oneHourInMs = 60 * 60 * 1000,
-    version = '20160427-1340',
+    version = '20160901-0858',
     minSleepTimeInMs = 1200,
     ipForCities = 'https://api.usergrid.com/mukundha/testdata/cities',
     citiesAndPopulation = 'https://api.usergrid.com/dino/loadgen1/cities',
@@ -586,6 +586,10 @@ function invokeOneRequest(context) {
     reqOptions.method = method;
     reqOptions.timeout = globalTimeout;
     reqOptions.followRedirects = false;
+
+    if (job.defaultProperties.proxy) {
+      reqOptions.proxy = job.defaultProperties.proxy;
+    }
 
     if (isUrl.test(url)) {
       // if it is a complete URL, use it.
