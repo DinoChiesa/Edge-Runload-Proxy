@@ -1,6 +1,9 @@
 // runLoad-proxy.js
 // ------------------------------------------------------------------
 //
+// created: Wed Jul 17 18:42:20 2013
+// last saved: <2016-December-23 12:35:41>
+//
 // Run a set of REST requests from Node, as specified in a job
 // definition file. This is to generate load for API Proxies.
 //
@@ -64,11 +67,9 @@
 //      progressively more info
 //    10 = max logging
 //
-// created: Wed Jul 17 18:42:20 2013
-// last saved: <2015-July-01 14:11:35>
 // ------------------------------------------------------------------
 //
-// Copyright © 2013-2016 Dino Chiesa and Apigee Corp
+// Copyright © 2013-2016 Dino Chiesa and Apigee Corp, and now Google Inc.
 // All rights reserved.
 //
 // ------------------------------------------------------------------
@@ -89,15 +90,18 @@ var assert = require('assert'),
     defaultRunsPerHour = 60,
     oneHourInMs = 60 * 60 * 1000,
     minSleepTimeInMs = 800,
-    ipForCities = 'https://api.usergrid.com/mukundha/testdata/cities',
-    citiesAndPopulation = 'https://api.usergrid.com/dino/loadgen1/cities',
+    //ipForCities = 'https://api.usergrid.com/mukundha/testdata/cities',
+    //citiesAndPopulation = 'https://api.usergrid.com/dino/loadgen1/cities',
+    baasBaseUrl = 'https://amer-apibaas-prod.apigee.net/appservices',
+    ipForCities = baasBaseUrl + '/amer-demo2/loadgen/ip-for-cities',
+    citiesAndPopulation = baasBaseUrl + '/amer-demo2/loadgen/cities',
     log = new Log(),
     isUrl = new RegExp('^https?://[-a-z0-9\\.]+($|/)', 'i'),
     wantMasking = true,
     gModel,
     gDefaultLogLevel = 2,
     gStatus = {
-      loadGenVersion: '20160901-0858',
+      loadGenVersion: '20161223-1234',
       times : {
         start : (new Date()).toString(),
         lastRun : (new Date()).toString(),

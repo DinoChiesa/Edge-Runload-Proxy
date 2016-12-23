@@ -18,7 +18,7 @@
 //
 //
 // created: Wed Jul 17 18:42:20 2013
-// last saved: <2016-September-01 08:58:46>
+// last saved: <2016-December-23 12:35:19>
 // ------------------------------------------------------------------
 //
 // Copyright © 2013-2016 Dino Chiesa and Apigee Corp
@@ -35,10 +35,13 @@ var assert = require('assert'),
     globalTimeout = 8000, // in ms
     defaultRunsPerHour = 60,
     oneHourInMs = 60 * 60 * 1000,
-    version = '20160901-0858',
+    version = '20161223-1233',
     minSleepTimeInMs = 1200,
-    ipForCities = 'https://api.usergrid.com/mukundha/testdata/cities',
-    citiesAndPopulation = 'https://api.usergrid.com/dino/loadgen1/cities',
+    //ipForCities = 'https://api.usergrid.com/mukundha/testdata/cities',
+    //citiesAndPopulation = 'https://api.usergrid.com/dino/loadgen1/cities',
+    baasBaseUrl = 'https://amer-apibaas-prod.apigee.net/appservices',
+    ipForCities = baasBaseUrl + '/amer-demo2/loadgen/ip-for-cities',
+    citiesAndPopulation = baasBaseUrl + '/amer-demo2/loadgen/cities',
     log = new Log(),
     isUrl = new RegExp('^https?://[-a-z0-9\\.]+($|/)', 'i'),
     wantMasking = true,
