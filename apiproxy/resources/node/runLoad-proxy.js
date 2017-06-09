@@ -2,7 +2,7 @@
 // ------------------------------------------------------------------
 //
 // created: Wed Jul 17 18:42:20 2013
-// last saved: <2016-December-23 12:35:41>
+// last saved: <2017-April-19 15:41:14>
 //
 // Run a set of REST requests from Node, as specified in a job
 // definition file. This is to generate load for API Proxies.
@@ -589,7 +589,8 @@ function invokeOneRequest(context) {
   p = p.then(function(ctx) {
     var deferredPromise = q.defer(),
         city,
-        method = (req.method)? req.method.toLowerCase() : "get",
+        method = (req.method)?
+           expandEmbeddedTemplates(ctx, req.method).toLowerCase() : "get",
         respCallback = function(e, httpResp, body) {
           var i, L, ex, obj, aIndex;
           gStatus.nRequests++;
@@ -696,7 +697,7 @@ function invokeOneRequest(context) {
     log.write(3, method.toUpperCase() + ' ' + reqOptions.uri);
 
     if (method === "post" || method === "put") {
-      actualPayload = expandEmbeddedTemplates(ctx, req.payload);
+      actualPayload = expandEmbeddedTemplates(ctx, req.payload || 'none');
       var t2 = Object.prototype.toString.call(actualPayload);
       if (t2 == '[object String]') {
         reqOptions.body = actualPayload;
@@ -715,7 +716,7 @@ function invokeOneRequest(context) {
       request(reqOptions, respCallback);
     }
     else {
-      assert.fail(r.method,"get|post|put|delete", "unsupported method", "<>");
+      log.write(0, 'unsupported method' + method.toUpperCase() + ' ' + reqOptions.uri);
     }
     return deferredPromise.promise;
   });

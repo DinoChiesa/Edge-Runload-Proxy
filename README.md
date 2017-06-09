@@ -1,10 +1,12 @@
-runload-proxy
-==============
-
-Monday,  1 February 2016, 14:03
+# runload-proxy
 
 This is an Apigee Edge proxy that lets you generate and run load against
-a different API.
+a different API. This proxy uses a nodejs target to generate outbound HTTP requests. The "target" of these requests can be any endpoint. This proxy was designed to generate synthetic load on API Proxies, in order to cause Apigee Edge to collect analytics data over time.  Using that data, we can then create analytics reports and charts based on real data.
+
+![example chart](images/sample-analytics-dashboard.png "Sample Analytics chart")
+
+
+But this proxy need not send requests to Apigee-hosted endpoints.
 
 The API endpoints to invoke, as well as the headers, query params, and
 payloads to send, are all defined in a job file, which is in json
@@ -12,19 +14,24 @@ format.
 
 The tool to run the load is a nodejs script, runLoad.js. This is set as
 the "target" of this API Proxy.  When you deploy this API proxy, the
-load begins to run.  It runs until you undeploy, or tell it to stop.
+load begins to run. It runs until you undeploy, or tell it to stop.
 More on that later. 
 
-
-Pre-requisites
-========================
-
-If you want to run the runload within an Apigee Edge proxy, then Apigee Edge  is a pre-req.
-You can run the runload-cli script outside of Apigee Edge, in which case you need node, and must do an `npm install` in order to run it. 
+You can deploy this proxy to any Apigee Edge organization, either Edge SaaS or a customer-managed (Self-managed?) Apigee Edge installation. 
 
 
-Usage
-========================
+## License
+
+This material is copyright 2014-2016 Apigee Corporation, 2017 Google Inc.
+and is licensed under the [Apache 2.0 License](LICENSE). This includes all the code as well as the API Proxy configuration. 
+
+## Pre-requisites
+
+If you want to run the runload within an Apigee Edge proxy, then Apigee Edge is a pre-req.
+You can run the runload-cli script outside of Apigee Edge, in which case you need node on your workstation, and must do an `npm install` in order to run it. 
+
+
+## Usage
 
 To use as a apiproxy in Edge:
 
@@ -32,13 +39,12 @@ To use as a apiproxy in Edge:
      edit the model.json file to specify the job to run. 
 
   2. packup the bundle and deploy it.  You can use the Edge UI for this
-     purpose , or a tool like pushapi from
-     https://github.com/carloseberhardt/apiploy, or your own tool.
+     purpose , or a tool like [pushapi](https://github.com/carloseberhardt/apiploy), or [a nodejs import tool](https://github.com/DinoChiesa/apigee-edge-js/blob/master/examples/importAndDeploy.js), or your own tool.
 
 
-The process runs forever. It invokes the API, maybe sleeps a little, and then
-does it again.  To stop it, you can send a /control action=stop request to the
-proxy. (see later in this readme.)  Or, undeploy the proxy. 
+The nodejs process runs forever. It invokes the API, maybe sleeps a little, and then
+does it again. To stop it, you can send a /control action=stop request to the
+proxy, about which you will read more, later in this readme.  Or, undeploy the proxy. 
 
 
 
@@ -54,7 +60,6 @@ To use as a command-line tool:
 
 The process runs forever. It invokes the API, maybe sleeps a little, and then
 does it again.  To stop it, ctrl-C. 
-
 
 
 Defining Jobs
