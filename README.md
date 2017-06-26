@@ -694,13 +694,13 @@ If you like, you can specify a hash here, using names of the days as
 property names. The following is equivalent to the above  variationByDayOfWeek setting :
 
       "variationByDayOfWeek" : {
-        'Sunday' : 0.9, 
-        'Monday' : 1.0,
-        'Tuesday' : 1.1, 
-        'Wednesday' : 2.1, 
-        'Thursday' : 1.8, 
-        'Friday' : 3.1, 
-        'Saturday' : 1.1
+        "Sunday"    : 0.9,
+        "Monday"    : 1.0,
+        "Tuesday"   : 1.1,
+        "Wednesday" : 2.1,
+        "Thursday"  : 1.8,
+        "Friday"    : 3.1,
+        "Saturday"  : 1.1
       },
 
 
