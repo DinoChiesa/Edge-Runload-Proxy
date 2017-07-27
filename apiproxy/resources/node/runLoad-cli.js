@@ -18,7 +18,7 @@
 //
 //
 // created: Wed Jul 17 18:42:20 2013
-// last saved: <2016-December-23 12:35:19>
+// last saved: <2017-July-27 14:10:41>
 // ------------------------------------------------------------------
 //
 // Copyright © 2013-2016 Dino Chiesa and Apigee Corp
@@ -29,13 +29,14 @@
 var assert = require('assert'),
     http = require('http'),
     Base64 = require('./base64'),
-    q = require ('q'),
+    q = require('q'),
+    merge = require('merge'),
     request = require('./slimNodeHttpClient.js'),
     WeightedRandomSelector = require('./weightedRandomSelector.js'),
     globalTimeout = 8000, // in ms
     defaultRunsPerHour = 60,
     oneHourInMs = 60 * 60 * 1000,
-    version = '20161223-1233',
+    version = '20170727-1338',
     minSleepTimeInMs = 1200,
     //ipForCities = 'https://api.usergrid.com/mukundha/testdata/cities',
     //citiesAndPopulation = 'https://api.usergrid.com/dino/loadgen1/cities',
@@ -44,7 +45,7 @@ var assert = require('assert'),
     citiesAndPopulation = baasBaseUrl + '/amer-demo2/loadgen/cities',
     log = new Log(),
     isUrl = new RegExp('^https?://[-a-z0-9\\.]+($|/)', 'i'),
-    wantMasking = true,
+    wantMasking = false,
     sleepTimeInMs = 5 * 60 * 1000,  // not really - this discounts runtime
     rStringChars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -122,7 +123,6 @@ function logTransaction(e, req, res, obj, payload) {
 
 function maskToken(value) {
   if ( ! wantMasking) {return value;}
-  var re1;
   if ( ! startsWith(value, 'Bearer ')) return value;
   return 'Bearer *******';
 }
@@ -536,6 +536,7 @@ function invokeOneRequest(context) {
 
   // 5. actually do the http call, and run the subsequent extracts
   p = p.then(function(ctx) {
+    if (!url) { ctx.state.request++; return ctx; }
     var deferredPromise = q.defer(),
         city,
         method = (req.method)? req.method.toLowerCase() : "get",
@@ -774,6 +775,10 @@ function runJob(context) {
 
 
 function initializeJobRunAndKickoff(context) {
+  var extracts = merge(true, context.job.initialContext);
+  if (context.state && context.state.extracts) {
+    extracts = merge(extracts, context.state.extracts);
+  }
   var now = (new Date()).valueOf(),
     // initialize context for running
       newState = {
@@ -784,7 +789,7 @@ function initializeJobRunAndKickoff(context) {
         R : context.job.sequences[0].requests.length,
         iteration : 0,
         I : [],
-        extracts: copyHash(context.job.initialContext),
+        extracts: extracts,
         start : now
       };
 
@@ -835,7 +840,7 @@ function setWakeup(context) {
     setTimeout(function () {
       var startMoment = new Date().valueOf();
       log.write(jobid + ' awake');
-      q({job:job, citySelector : context.citySelector})
+      q({job:job, citySelector : context.citySelector, state: context.state})
         .then(initializeJobRunAndKickoff)
         .done(function(){},
               function(e){

@@ -2,7 +2,7 @@
 // ------------------------------------------------------------------
 //
 // created: Wed Jul 17 18:42:20 2013
-// last saved: <2017-April-19 15:41:14>
+// last saved: <2017-July-27 14:11:00>
 //
 // Run a set of REST requests from Node, as specified in a job
 // definition file. This is to generate load for API Proxies.
@@ -69,7 +69,7 @@
 //
 // ------------------------------------------------------------------
 //
-// Copyright © 2013-2016 Dino Chiesa and Apigee Corp, and now Google Inc.
+// Copyright © 2013-2016 Dino Chiesa and Apigee Corp, and Copyright 2017, Google Inc.
 // All rights reserved.
 //
 // ------------------------------------------------------------------
@@ -77,7 +77,8 @@
 var assert = require('assert'),
     http = require('http'),
     Base64 = require('./base64'),
-    q = require ('q'),
+    q = require('q'),
+    merge = require('merge'),
     request = require('./slimNodeHttpClient.js'),
     express = require('express'),
     fs = require('fs'),
@@ -101,7 +102,7 @@ var assert = require('assert'),
     gModel,
     gDefaultLogLevel = 2,
     gStatus = {
-      loadGenVersion: '20161223-1234',
+      loadGenVersion: '20170727-1337',
       times : {
         start : (new Date()).toString(),
         lastRun : (new Date()).toString(),
@@ -587,66 +588,66 @@ function invokeOneRequest(context) {
 
   // 5. actually do the http call, and run the subsequent extracts
   p = p.then(function(ctx) {
+    if (!url) { ctx.state.request++; return ctx; }
     var deferredPromise = q.defer(),
-        city,
-        method = (req.method)?
-           expandEmbeddedTemplates(ctx, req.method).toLowerCase() : "get",
-        respCallback = function(e, httpResp, body) {
-          var i, L, ex, obj, aIndex;
-          gStatus.nRequests++;
-          if (e) {
-            log.write(2, e);
-          }
-          else {
-            log.write(2, "==> " + httpResp.statusCode);
-            // keep a count of status codes
-            aIndex = httpResp.statusCode + '';
-            if (gStatus.responseCounts.hasOwnProperty(aIndex)) {
-              gStatus.responseCounts[aIndex]++;
+    city,
+    method = (req.method) ? expandEmbeddedTemplates(ctx, req.method).toLowerCase() : "get",
+    respCallback = function(e, httpResp, body) {
+      var i, L, ex, obj, aIndex;
+      gStatus.nRequests++;
+      if (e) {
+        log.write(2, e);
+      }
+      else {
+        log.write(2, "==> " + httpResp.statusCode);
+        // keep a count of status codes
+        aIndex = httpResp.statusCode + '';
+        if (gStatus.responseCounts.hasOwnProperty(aIndex)) {
+          gStatus.responseCounts[aIndex]++;
+        }
+        else {
+          gStatus.responseCounts[aIndex] = 1;
+        }
+        gStatus.responseCounts.total++;
+        if (req.extracts && req.extracts.length>0) {
+          // cache the eval'd extract functions
+          // if ( ! ctx.state.extracts) { ctx.state.extracts = {}; }
+          for (i=0, L=req.extracts.length; i<L; i++) {
+            ex = req.extracts[i];
+            if ( ! ex.compiledFn) {
+              log.write(6,'eval: ' + ex.fn);
+              ex.compiledFn = eval('(' + ex.fn + ')');
             }
-            else {
-              gStatus.responseCounts[aIndex] = 1;
-            }
-            gStatus.responseCounts.total++;
-            if (req.extracts && req.extracts.length>0) {
-              // cache the eval'd extract functions
-              // if ( ! ctx.state.extracts) { ctx.state.extracts = {}; }
-              for (i=0, L=req.extracts.length; i<L; i++) {
-                ex = req.extracts[i];
-                if ( ! ex.compiledFn) {
-                  log.write(6,'eval: ' + ex.fn);
-                  ex.compiledFn = eval('(' + ex.fn + ')');
-                }
-                log.write(6, ex.description);
-                // actually invoke the compiled fn
+            log.write(6, ex.description);
+            // actually invoke the compiled fn
+            try {
+              // sometimes the body is already parsed into an object?
+              obj = Object.prototype.toString.call(body);
+              if (obj === '[object String]') {
                 try {
-                  // sometimes the body is already parsed into an object?
-                  obj = Object.prototype.toString.call(body);
-                  if (obj === '[object String]') {
-                    try {
-                      obj = JSON.parse(body);
-                    }
-                    catch (exc1){
-                      // possibly it was not valid json
-                      obj = null;
-                    }
-                  }
-                  else {
-                    obj = body;
-                  }
-                  ctx.state.extracts[ex.valueRef] = ex.compiledFn(obj, httpResp.headers, ctx.state.extracts);
-                  log.write(5, ex.valueRef + ':=' + JSON.stringify(ctx.state.extracts[ex.valueRef]));
+                  obj = JSON.parse(body);
                 }
-                catch (exc1) {
-                  ctx.state.extracts[ex.valueRef] = null;
-                  log.write(5, ex.valueRef + ':= null (exception: ' + exc1 + ')');
+                catch (exc1){
+                  // possibly it was not valid json
+                  obj = null;
                 }
               }
+              else {
+                obj = body;
+              }
+              ctx.state.extracts[ex.valueRef] = ex.compiledFn(obj, httpResp.headers, ctx.state.extracts);
+              log.write(5, ex.valueRef + ':=' + JSON.stringify(ctx.state.extracts[ex.valueRef]));
+            }
+            catch (exc1) {
+              ctx.state.extracts[ex.valueRef] = null;
+              log.write(5, ex.valueRef + ':= null (exception: ' + exc1 + ')');
             }
           }
-          ctx.state.request++;
-          deferredPromise.resolve(ctx);
-        };
+        }
+      }
+      ctx.state.request++;
+      deferredPromise.resolve(ctx);
+    };
 
     reqOptions.method = method;
     reqOptions.timeout = globalTimeout;
@@ -840,6 +841,10 @@ function runJob(context) {
 
 
 function initializeJobRun(context) {
+  var extracts = merge(true, context.job.initialContext);
+  if (context.state && context.state.extracts) {
+    extracts = merge(extracts, context.state.extracts);
+  }
   var now = (new Date()).valueOf(),
     // initialize context for running
       newState = {
@@ -850,7 +855,7 @@ function initializeJobRun(context) {
         R : context.job.sequences[0].requests.length,
         iteration : 0,
         I : [],
-        extracts: copyHash(context.job.initialContext),
+        extracts: extracts,
         start : now
       };
 
@@ -1017,7 +1022,7 @@ function setWakeup(context) {
         gStatus.cachedStatus = value || '-none-';
         if (e || value != "stopped") {
           // failed to get a value, or value is not stopped
-          q({job:job, continuing: true})
+          q({job:job, continuing: true, state:context.state})
             .then(initializeJobRun)
             .done(function(){},
                   function(e){

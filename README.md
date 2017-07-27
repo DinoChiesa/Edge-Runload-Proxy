@@ -116,7 +116,7 @@ minute, forever.
 
 The initialContext property on the job provides the initial set of
 context data items. In this case, the job context gets hard-coded login
-credentials.  These values will be accessible via "templates" that you
+credentials. These values will be accessible via "templates" that you
 can apply to headers or urls or payloads on requests. In this example,
 the json payload gets its values from the context. If you wanted to use a
 context value to construct a url path, you could do it with a template,
@@ -430,7 +430,7 @@ subsequent import functions, or to the template expressions.
 The imports are similar to the extract functions; the imports run before
 the call and get only the context as a parameter, and not the
 response. In contrast, the extract functions run after the call returns,
-and get three arguments: payload (objet), headers (Array of strings),
+and get three arguments: payload (object), headers (Array of strings),
 and context (object). Both import and extract functions implicitly
 inject values into the context via their return values:
 whatever you return from those functions is stuffed into a named property on
@@ -461,7 +461,7 @@ You can get as complex as you like with the expression. The function
 gets all the context values as named parameters (eg: creds, credNum), so
 your expression can refer to them directly.
 
-This expression shows the use of the Base64 object.  The Base64 object
+This expression shows the use of the Base64 object. The Base64 object
 has 2 methods: encode() and decode(), which do what you think they
 should.
 
@@ -705,11 +705,60 @@ property names. The following is equivalent to the above  variationByDayOfWeek s
 
 
 
+Running a request conditionally
+================================
+
+In some cases you may want to invoke an API request conditionally. The way to do this is to set the url to a template,
+and set the value conditionally in an import.  Consider this request that conditionally gets a new token:
+
+    "sequences" : [
+      {
+        "description" : "login",
+        "iterations" : 1,
+        "requests" : [ {
+          "url" : "{token_url}",
+          "method" : "post",
+          "imports" : [
+            {
+              "description" : "choose a set of credentials",
+              "fn" : "function(ctx) {return Math.floor(Math.random() * ctx.creds.length);}",
+              "valueRef" : "credNum"
+            },
+            {
+              "description" : "set the token URL only if we need a new token. null means no token request.",
+              "fn" : "function(ctx) { var now = (new Date()).valueOf(); if (ctx.stamped_token && ctx.stamped_token.stamp) { var delta = now - ctx.stamped_token.stamp; if (delta<60*58*1000) { return null; } } return '/oauth/client_credential/accesstoken?grant_type=client_credentials'; }",
+              "valueRef" : "token_url"
+            }
+          ],
+          "headers" : {
+            "Authorization" : "Basic {Base64.encode(creds[credNum].username + ':' + creds[credNum].password)}"
+          },
+          "delayBefore" : 0,
+          "extracts" : [
+            {
+              "description" : "extract the login token with a timestamp",
+              "fn" : "function(obj) { return {token:obj.access_token, stamp: (new Date()).valueOf()}; }",
+              "valueRef" : "stamped_token"
+            }
+          ]
+        } ]
+      },
+
+The second "import" function there, examines the context for a saved token. If one exists, and if the timestamp on it is current, then the import function returns null, which sets the named context value (token_url) to null. runload is designed to NOT run the request if the url is falsy.  
+
+If the token request IS made, then it gets stored along with the current timestamp. 
+
+The context for a subsequent run (after delay/sleep) gets the existing context, so any token that was previously acquired and its timestamp will be available.
+The upshot is, the first time through this request will run and acquire a new token. On subequent runs, the request will not run.  The token will always be available as "stamped_token.token". 
+
+
+
 Including Source in the synthentic transactions
 ================================
 
 It may be a good idea to include the source of the synthetic transaction in the
-request. To do so, you could use this: 
+request. When running from within an Apigee Edge proxy, you have the Apigee organization and environment available to you via environment variables.
+To take advantage of this, you could use this: 
 
       "sequences" : [
         {
@@ -731,8 +780,6 @@ request. To do so, you could use this:
 
 Functions and Objects available to templates
 ================================
-
-
 
 * **randomName()** - fn, returns a given name with a number suffix. Examples: 
   "Lewis-8938", "Mary-123". 
