@@ -1,23 +1,32 @@
 # runload-proxy
 
-This is an Apigee Edge proxy that lets you generate and run load against
-a different API. This proxy uses a nodejs target to generate outbound HTTP requests. The "target" of these requests can be any endpoint. This proxy was designed to generate synthetic load on API Proxies, in order to cause Apigee Edge to collect analytics data over time.  Using that data, we can then create analytics reports and charts based on real data.
+NB: 2019 June 21 THIS WILL SOON STOP WORKING.
+The nodejs target in Apigee Edge is deprecated; you should move to hosted targets.
+
+----
+
+This is an Apigee Edge proxy that lets you generate and run load against a
+different API. This proxy uses a nodejs target to generate outbound HTTP
+requests. The "target" of these requests can be any endpoint. This proxy was
+designed to generate synthetic load on API Proxies, in order to cause Apigee
+Edge to collect analytics data over time.  Using that data, we can then create
+analytics reports and charts based on real data.
 
 ![example chart](images/sample-analytics-dashboard.png "Sample Analytics chart")
 
 
 But this proxy need not send requests to Apigee-hosted endpoints.
 
-The API endpoints to invoke, as well as the headers, query params, and
-payloads to send, are all defined in a job file, which is in json
-format.
+You can define the API endpoints to invoke, as well as the headers, query
+params, and payloads to send, in a job file, which is in json format.
 
 The tool to run the load is a nodejs script, runLoad.js. This is set as
 the "target" of this API Proxy.  When you deploy this API proxy, the
 load begins to run. It runs until you undeploy, or tell it to stop.
 More on that later.
 
-You can deploy this proxy to any Apigee Edge organization, either Edge SaaS or a customer-managed (Self-managed?) Apigee Edge installation.
+You can deploy this proxy to any Apigee Edge organization, either Edge SaaS or a
+customer-managed (Self-managed?) Apigee Edge installation.
 
 
 ## License
