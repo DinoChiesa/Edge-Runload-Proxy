@@ -6,11 +6,8 @@
     "email": "dchiesa@google.com"
   },
   "license": "Apache-2.0",
-  "version": "0.1.9",
-  "keywords": [
-    "apigee",
-    "edge"
-  ],
+  "version": "0.1.10",
+  "keywords": [ "apigee", "edge", "proxy" ],
   "scripts": {
     "start": "node runLoad-cli.js model.json"
   },
@@ -24,8 +21,8 @@
   },
   "dependencies": {
     "assert": "0.4.9",
-    "express": "~3.3.1",
-    "https-proxy-agent": "1.0.0",
+    "express": ">=3.11.0",
+    "https-proxy-agent": ">=2.2.0",
     "json-stringify-safe": "5.0.0",
     "merge": "^1.2.0",
     "q": "0.9.7"

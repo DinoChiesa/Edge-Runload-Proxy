@@ -7,8 +7,7 @@
         <Response/>
     </PreFlow>
     <HTTPProxyConnection>
-        <BasePath>/runload</BasePath>
-        <VirtualHost>default</VirtualHost>
+        <BasePath>/runload-proxy</BasePath>
         <VirtualHost>secure</VirtualHost>
     </HTTPProxyConnection>
     <RouteRule name="default">

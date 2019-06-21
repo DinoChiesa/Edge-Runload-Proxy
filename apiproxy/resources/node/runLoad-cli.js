@@ -18,7 +18,7 @@
 //
 //
 // created: Wed Jul 17 18:42:20 2013
-// last saved: <2017-July-27 14:10:41>
+// last saved: <2018-January-09 20:18:06>
 // ------------------------------------------------------------------
 //
 // Copyright © 2013-2016 Dino Chiesa and Apigee Corp
@@ -36,7 +36,7 @@ var assert = require('assert'),
     globalTimeout = 8000, // in ms
     defaultRunsPerHour = 60,
     oneHourInMs = 60 * 60 * 1000,
-    version = '20170727-1338',
+    version = '20180109-2008',
     minSleepTimeInMs = 1200,
     //ipForCities = 'https://api.usergrid.com/mukundha/testdata/cities',
     //citiesAndPopulation = 'https://api.usergrid.com/dino/loadgen1/cities',
@@ -191,6 +191,12 @@ function chooseRandomIpFromRecord(rec) {
   return null;
 }
 
+function selectIpAddressFromRestrictedList(context) {
+  var numOptions = context.job.geoDistribution.length;
+  context.job.contrivedIp = context.job.geoDistribution[Math.floor(Math.random() * numOptions)];
+  log.write(8,'selectIpAddressFromRestrictedList: ' + context.job.contrivedIp);
+  return context;
+}
 
 function contriveIpAddress(context) {
   var city, ql, options, deferred;
@@ -526,8 +532,13 @@ function invokeOneRequest(context) {
           else {
             value = req.headers[hdr];
           }
-          log.write('Header ' + hdr + ': ' + maskToken(value) );
-          reqOptions.headers[hdr.toLowerCase()] = value;
+          if (hdr && value) {
+            log.write('Header ' + hdr + ': ' + maskToken(value) );
+            reqOptions.headers[hdr.toLowerCase()] = value;
+          }
+          else {
+            log.write('either the name or the value of header is undefined');
+          }
         }
       }
       return ctx;
@@ -626,8 +637,10 @@ function invokeOneRequest(context) {
     // log.write('parsed URL :' + JSON.stringify(parsedUrl, null, 2));
 
     if (job.hasOwnProperty('contrivedIp') && job.contrivedIp) {
-      reqOptions.headers['x-random-city'] = job.chosenCity;
       reqOptions.headers['x-forwarded-for'] = job.contrivedIp;
+      if (job.hasOwnProperty('chosenCity') && job.chosenCity) {
+        reqOptions.headers['x-random-city'] = job.chosenCity;
+      }
     }
     else {
       log.write('no contrived IP');
@@ -740,11 +753,14 @@ function runJob(context) {
 
   // generate a random IP address if necessary
   if (state.request === 0 && state.iteration === 0 && state.sequence === 0) {
-    if (!job.hasOwnProperty('geoDistribution') || job.geoDistribution == 1) {
+    if (!job.hasOwnProperty('geoDistribution') || job.geoDistribution === 1) {
       if (!context.citySelector) {
-        p = p.then(retrieveCities);
+        p = p.then(retrieveCities, trackFailure);
       }
-      p = p.then(contriveIpAddress);
+      p = p.then(contriveIpAddress, trackFailure);
+    }
+    else if (Array.isArray(job.geoDistribution)) {
+      p = p.then(selectIpAddressFromRestrictedList, trackFailure);
     }
     else {
       p = p.then(function(ctx){

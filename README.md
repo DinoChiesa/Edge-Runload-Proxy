@@ -15,28 +15,28 @@ format.
 The tool to run the load is a nodejs script, runLoad.js. This is set as
 the "target" of this API Proxy.  When you deploy this API proxy, the
 load begins to run. It runs until you undeploy, or tell it to stop.
-More on that later. 
+More on that later.
 
-You can deploy this proxy to any Apigee Edge organization, either Edge SaaS or a customer-managed (Self-managed?) Apigee Edge installation. 
+You can deploy this proxy to any Apigee Edge organization, either Edge SaaS or a customer-managed (Self-managed?) Apigee Edge installation.
 
 
 ## License
 
 This material is copyright 2014-2016 Apigee Corporation, 2017 Google Inc.
-and is licensed under the [Apache 2.0 License](LICENSE). This includes all the code as well as the API Proxy configuration. 
+and is licensed under the [Apache 2.0 License](LICENSE). This includes all the code as well as the API Proxy configuration.
 
 ## Pre-requisites
 
 If you want to run the runload within an Apigee Edge proxy, then Apigee Edge is a pre-req.
-You can run the runload-cli script outside of Apigee Edge, in which case you need node on your workstation, and must do an `npm install` in order to run it. 
+You can run the runload-cli script outside of Apigee Edge, in which case you need node on your workstation, and must do an `npm install` in order to run it.
 
 
 ## Usage
 
 To use as a apiproxy in Edge:
 
-  1. in the apiproxy/resources/node directory, 
-     edit the model.json file to specify the job to run. 
+  1. in the apiproxy/resources/node directory,
+     edit the model.json file to specify the job to run.
 
   2. packup the bundle and deploy it.  You can use the Edge UI for this
      purpose , or a tool like [pushapi](https://github.com/carloseberhardt/apiploy), or [a nodejs import tool](https://github.com/DinoChiesa/apigee-edge-js/blob/master/examples/importAndDeploy.js), or your own tool.
@@ -44,14 +44,14 @@ To use as a apiproxy in Edge:
 
 The nodejs process runs forever. It invokes the API, maybe sleeps a little, and then
 does it again. To stop it, you can send a /control action=stop request to the
-proxy, about which you will read more, later in this readme.  Or, undeploy the proxy. 
+proxy, about which you will read more, later in this readme.  Or, undeploy the proxy.
 
 
 
 To use as a command-line tool:
 
-  1. in the apiproxy/resources/node directory, 
-     edit the model.json file to specify the job to run. 
+  1. in the apiproxy/resources/node directory,
+     edit the model.json file to specify the job to run.
 
   2. `npm install`
 
@@ -59,13 +59,13 @@ To use as a command-line tool:
 
 
 The process runs forever. It invokes the API, maybe sleeps a little, and then
-does it again.  To stop it, ctrl-C. 
+does it again.  To stop it, ctrl-C.
 
 
 Defining Jobs
 ========================
 
-To define a job, you need to write a JSON file.  Here's a very simple example. 
+To define a job, you need to write a JSON file.  Here's a very simple example.
 
     {
       "name": "job1",
@@ -106,9 +106,9 @@ application/json. There will be just one sequence of requests, and in
 that sequence just one request. That request will POST to the url path
 /v1/login . It will provide as a payload, a json object containing a
 username and password. The values for the username and password are
-obtained from the job context.  
+obtained from the job context.
 
-All the properties in the job definition have case-sensitive names. 
+All the properties in the job definition have case-sensitive names.
 
 Running this job would exercise the login function of a fictitious
 sonoasystems API.  The runload proxy defaults to run the job once per
@@ -122,7 +122,7 @@ the json payload gets its values from the context. If you wanted to use a
 context value to construct a url path, you could do it with a template,
 this way:
 
-    /v1/test/{href} 
+    /v1/test/{href}
 
 runload will replace {href} with the value of the href property from the
 context.
@@ -134,21 +134,21 @@ before it is used.  If you specify a fully qualified url, which begins
 with a scheme (http or https), then the "job defaults" values are ignored
 for that request.
 
-Notes on the properties in that job description: 
+Notes on the properties in that job description:
 
-* **name**  
+* **name**
   This is used in the job logging output, and also for job control
   inside Apigee Edge. The script will access the Edge cache, using a
   key name which is derived from this job name.  Therefore, use a
   unique name, a string, no spaces. (don't use 'job1')
 
-* **description**  
+* **description**
   Used for diagnostic purposes only. The script emits this description
-  when launching the job. 
+  when launching the job.
 
 * **defaultProperties**
   These are all obvious. There are no other default properties other
-  than those shown in the example. 
+  than those shown in the example.
 
 
 ---
@@ -158,7 +158,7 @@ will be implicitly sent with content-type = application/json.  Or it can
 be a simple string, in which case the outbound message will be sent with
 application/x-www-form-urlencoded.
 
-Example of the former: 
+Example of the former:
 
           "requests" : [ {
               "method" : "post",
@@ -173,7 +173,7 @@ Example of the former:
               },
               ....
 
-Example of the latter: 
+Example of the latter:
 
           "requests" : [ {
               "method" : "post",
@@ -251,14 +251,14 @@ Consider this job definition:
             "payload" : {
               "username":"test",
               "password":"password"
-            }, 
+            },
             "delayBefore" : 0,
             "extracts" : [
               {
                 "description" : "extract the login token",
                 "fn" : "function(obj) {return obj.login.token;}",
                 "valueRef" : "oauth_bearer_token"
-              }, 
+              },
               {
                 "description" : "extract the user and site hrefs",
                 "fn" : "function(obj) {var re1=new RegExp('^/[^/]+/[^/]+(/.*)$'), m1,m2; m1=re1.exec(obj.login.user.href); m2=re1.exec(obj.login.site.href); return {user:m1[1],site:m2[1]};}",
@@ -271,13 +271,13 @@ Consider this job definition:
           "description" : "query user item (self)",
           "iterations" : "Math.floor(Math.random() * 5) + 4",
           "delayBetweenIterations" : "Math.floor(Math.random() * 300) + 120",
-          "requests" : [ 
+          "requests" : [
             {
               "url" : "/v1/ictrl/{hrefs.user}",
               "method" : "get",
               "headers" : {
                 "authorization" : "Bearer {oauth_bearer_token}"
-              }, 
+              },
               "delayBefore" : 10
             },
             {
@@ -286,7 +286,7 @@ Consider this job definition:
               "method" : "get",
               "headers" : {
                 "authorization" : "Bearer {oauth_bearer_token}"
-              }, 
+              },
               "delayBefore" : 10
             }
           ]
@@ -294,10 +294,10 @@ Consider this job definition:
       ]
     }
 
-This job definition adds a few properties: extracts, invocationsPerHour, 
-a random number of iterations, delayBetweenIterations, and geoDistribution. 
+This job definition adds a few properties: extracts, invocationsPerHour,
+a random number of iterations, delayBetweenIterations, and geoDistribution.
 
-* **extracts**  
+* **extracts**
   After receiving the response, runLoad calls the functions provided
   in the 'extracts' array, passing the response. The return values of
   those functions get placed as additional values in the job context,
@@ -308,15 +308,15 @@ a random number of iterations, delayBetweenIterations, and geoDistribution.
   pretty fancy with the extracts, using them to specify values in the
   payload or the url path or headers.
 
-* **invocationsPerHour**  
+* **invocationsPerHour**
   The top-level property named "invocationsPerHour" holds an array of
   24 numbers. Each number tells the load runner the number of cycles
   of the job to run for that particular hour of the day, where
   midnight begins the zero hour. These numbers don't specify the
   desired number of requests, it's the desired number of job runs,
   each of which may have multiple sequences, each of which has one or
-  more requests.  
-  
+  more requests.
+
     If you set this to 60 for a particular hour, runload will try to run
     60 job runs for that hour, one per minute. The runLoad script can't
     guarantee that it will run this number of jobs. For example, suppose
@@ -325,7 +325,7 @@ a random number of iterations, delayBetweenIterations, and geoDistribution.
     job before it needs to start the second. But the script runs the
     jobs serial fashion: the first job must complete before runload
     starts the second. So in this case, jobs will run "as fast as they
-    can", but it won't reach 60 jobs per hour.  
+    can", but it won't reach 60 jobs per hour.
 
     How many invocations should you run? Hard to say. If you run 60 per
     hour, and each job implies 8 requests, then you will get 8 requests per
@@ -343,7 +343,7 @@ a random number of iterations, delayBetweenIterations, and geoDistribution.
   load.  The runLoad script does this by calling out to two lists in
   App Services to select cities and IP addresses for those cities.
 
-* **iterations**  
+* **iterations**
   This job definition also includes multiple sequences with multiple
   requests in each. The second sequence in this example shows how to
   specify a varying number of iterations. You can use any javascript
@@ -351,7 +351,7 @@ a random number of iterations, delayBetweenIterations, and geoDistribution.
   "Math.floor(Math.random() * 3) + 2". If you omit the iterations
   property, it defaults to 1.
 
-* **delayBetweenIterations**  
+* **delayBetweenIterations**
   A sequence consists of a set of requests, and each sequence can be
   repeated N times. Between iterations, runload may delay, this amount
   of time.  This number can be a pure numeric, interpreted as
@@ -359,7 +359,7 @@ a random number of iterations, delayBetweenIterations, and geoDistribution.
   which holds a Javascript expression that resolves to a numeric; for
   example, "Math.floor(Math.random() * 500) +
   750". delayBetweenIterations defaults to zero. This quantity is
-  obviously irrelevant if the number of iterations is 1 (or default). 
+  obviously irrelevant if the number of iterations is 1 (or default).
 
 
 If you provide bad code in either of iterations or
@@ -375,7 +375,7 @@ appropriate care.
 An Example with Imports
 --------------------------------
 
-Consider this job definition: 
+Consider this job definition:
 
     {
       "name": "job1",
@@ -451,7 +451,7 @@ expression between the curlies is
     Base64.encode(creds[credNum].username + ':' + creds[credNum].password)
 
 This expression gets wrapped into a function, which is evaluated at
-runtime. In this case it will result in a function that looks like: 
+runtime. In this case it will result in a function that looks like:
 
     function (creds, credNum) {
       return Base64.encode(creds[credNum].username + ':' + creds[credNum].password);
@@ -470,7 +470,7 @@ url, within curlies.
 
 The imports, extracts, and templating means you can create very dynamic
 sequences of API requests, each of which might depend on the results of
-prior requests. 
+prior requests.
 
 
 Weighted Random Selection
@@ -542,7 +542,7 @@ This example also shows the use of multiple imports, and the
 randomName() function, which does what you think it does.  It does not
 run any extracts.
 
-Just for completeness, you could also structure this job like so: 
+Just for completeness, you could also structure this job like so:
 
       "sequences" : [
         {
@@ -636,12 +636,12 @@ Consider this example:
       ]
     }
 
-This one has a sequence with 2 requests. The first request runs once, 
+This one has a sequence with 2 requests. The first request runs once,
 and requests an access token. The second request runs N times, where N
 is a random value from 3-8. It passes the token appropriately in the
-authorization header. 
+authorization header.
 
-delayBefore is specified in milliseconds. 
+delayBefore is specified in milliseconds.
 
 
 Varying load by day-of-week
@@ -688,7 +688,7 @@ is the day of the week. (0= Sunday, 1= Monday, etc.)  This allows the
 load to vary over the course of the week, to make the analytics charts
 look more interesting. Each coefficient should be a floating point
 number between 0 and 10. If it falls out of that range, then the script
-will use 1. 
+will use 1.
 
 If you like, you can specify a hash here, using names of the days as
 property names. The following is equivalent to the above  variationByDayOfWeek setting :
@@ -744,12 +744,12 @@ and set the value conditionally in an import.  Consider this request that condit
         } ]
       },
 
-The second "import" function there, examines the context for a saved token. If one exists, and if the timestamp on it is current, then the import function returns null, which sets the named context value (token_url) to null. runload is designed to NOT run the request if the url is falsy.  
+The second "import" function there, examines the context for a saved token. If one exists, and if the timestamp on it is current, then the import function returns null, which sets the named context value (token_url) to null. runload is designed to NOT run the request if the url is falsy.
 
-If the token request IS made, then it gets stored along with the current timestamp. 
+If the token request IS made, then it gets stored along with the current timestamp.
 
 The context for a subsequent run (after delay/sleep) gets the existing context, so any token that was previously acquired and its timestamp will be available.
-The upshot is, the first time through this request will run and acquire a new token. On subequent runs, the request will not run.  The token will always be available as "stamped_token.token". 
+The upshot is, the first time through this request will run and acquire a new token. On subequent runs, the request will not run.  The token will always be available as "stamped_token.token".
 
 
 
@@ -758,7 +758,7 @@ Including Source in the synthentic transactions
 
 It may be a good idea to include the source of the synthetic transaction in the
 request. When running from within an Apigee Edge proxy, you have the Apigee organization and environment available to you via environment variables.
-To take advantage of this, you could use this: 
+To take advantage of this, you could use this:
 
       "sequences" : [
         {
@@ -781,20 +781,20 @@ To take advantage of this, you could use this:
 Functions and Objects available to templates
 ================================
 
-* **randomName()** - fn, returns a given name with a number suffix. Examples: 
-  "Lewis-8938", "Mary-123". 
+* **randomName()** - fn, returns a given name with a number suffix. Examples:
+  "Lewis-8938", "Mary-123".
 
-* **selectGivenName()** - fn, returns a given name. ex: "Lewis", "Jin", "Mary". 
+* **selectGivenName()** - fn, returns a given name. ex: "Lewis", "Jin", "Mary".
 
 * **WeightedRandomSelector** - object. The constructor accepts an array of
   pairs. The first element in each pair is a value, the second is a
   weight. This object has just one method, select(). Call it to get a
   value from the list of pairs, selected based on the weightings.  You can
-  use this to vary the key usage, or whatever. 
+  use this to vary the key usage, or whatever.
 
-* **Base64** - object. Includes 2 functions: encode() and decode(). They do 
+* **Base64** - object. Includes 2 functions: encode() and decode(). They do
   what you think they should. You can use this to produce an HTTP Basic
-  Auth header in an outbound request. 
+  Auth header in an outbound request.
 
 
 Running as a server
@@ -804,11 +804,11 @@ This code is set up to run as a nodejs target in an Apigee Edge
 Proxy. It will begin running, and generating load against your targets,
 as soon as you deploy your proxy.
 
-Top stop generating load, you can undeploy the proxy. 
+Top stop generating load, you can undeploy the proxy.
 
-Also, there is an API exposed by this nodejs script. 
+Also, there is an API exposed by this nodejs script.
 
-You can temporarily stop and start load like this: 
+You can temporarily stop and start load like this:
 
 
     curl -X POST http://cass1-test.apigee.net/runload1/control  -d 'action=start'
@@ -839,7 +839,7 @@ You can also control the logging level of the agent. like thi:
 
     curl -X POST http://cass1-test.apigee.net/runload1/control  -d 'action=setlog&loglevel=3'
 
-These are the loglevel values: 
+These are the loglevel values:
 * 0 = almost no logging
 * 2 = very minimal logging - only wake/sleep and errors
 * 3 = see each API call out.

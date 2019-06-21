@@ -2,7 +2,7 @@
 // ------------------------------------------------------------------
 //
 // created: Wed Jul 17 18:42:20 2013
-// last saved: <2017-July-27 14:11:00>
+// last saved: <2018-January-10 09:54:40>
 //
 // Run a set of REST requests from Node, as specified in a job
 // definition file. This is to generate load for API Proxies.
@@ -76,7 +76,7 @@
 
 var assert = require('assert'),
     http = require('http'),
-    Base64 = require('./base64'),
+    Base64 = require('./base64.js'),
     q = require('q'),
     merge = require('merge'),
     request = require('./slimNodeHttpClient.js'),
@@ -102,7 +102,7 @@ var assert = require('assert'),
     gModel,
     gDefaultLogLevel = 2,
     gStatus = {
-      loadGenVersion: '20170727-1337',
+      loadGenVersion: '20180109-2014',
       times : {
         start : (new Date()).toString(),
         lastRun : (new Date()).toString(),
@@ -260,7 +260,7 @@ function retrieveCities(ctx) {
   var deferredPromise = q.defer(),
       options = {
         timeout : 66000, // in ms
-        uri: citiesAndPopulation + '?limit=350',
+        uri: citiesAndPopulation + '?limit=450',
         method: 'get',
         headers: {
           'Accept' : 'application/json',
@@ -286,7 +286,7 @@ function retrieveCities(ctx) {
           globals.citySelector = new WeightedRandomSelector(cities);
         }
         catch(exc1) {
-          log.write(2,'retrieveCities: cannot parse body :(');
+          log.write(2,'retrieveCities: cannot parse body');
         }
       }
       log.write(8,'retrieveCities done');
@@ -324,6 +324,12 @@ function chooseRandomIpFromRecord(rec) {
   return null;
 }
 
+function selectIpAddressFromRestrictedList(context) {
+  var numOptions = context.job.geoDistribution.length;
+  context.job.contrivedIp = context.job.geoDistribution[Math.floor(Math.random() * numOptions)];
+  log.write(8,'selectIpAddressFromRestrictedList: ' + context.job.contrivedIp);
+  return context;
+}
 
 function contriveIpAddress(context) {
   var city, ql, options, deferred;
@@ -370,13 +376,19 @@ function contriveIpAddress(context) {
     else {
       type = Object.prototype.toString.call(body);
       if (type === "[object String]") {
+        log.write(4,'contriveIpAddress: body is string');
         try {
+          log.write(4,'contriveIpAddress: parsing...');
           body = JSON.parse(body);
         }
         catch(exc1) {
-          log.write(2,'contriveIpAddress: cannot parse body :(');
+          log.write(2,'contriveIpAddress: cannot parse body');
         }
       }
+      else {
+        log.write(4,'contriveIpAddress: body is not string');
+      }
+      log.write(4,'contriveIpAddress: body: ' + JSON.stringify(body));
       if (body.entities && body.entities[0]) {
         if (!globals.cities) { globals.cities = {}; }
         // do not cache this data - see APIRT-1974
@@ -384,7 +396,7 @@ function contriveIpAddress(context) {
         choose(body.entities[0]);
       }
       else {
-        log.write(2,'contriveIpAddress: no body entities');
+        log.write(2,'contriveIpAddress: no body entities for city: ' + city.name);
       }
     }
     deferred.resolve(context);
@@ -567,19 +579,24 @@ function invokeOneRequest(context) {
   if (req.headers) {
     p = p.then(function(ctx) {
       Object.keys(req.headers).forEach(function(hdr){
-        var value = req.headers[hdr],
-            match = re.exec(value);
-        if (match) {
-          // replace all templates until done
-          for (; match; match = re.exec(value)) {
-            value = match[1] + evalTemplate(ctx, match[2]) + match[3];
+        var value, match;
+        if (hdr) {
+          value = req.headers[hdr];
+          match = re.exec(value);
+          if (match) {
+            // replace all templates until done
+            for (; match; match = re.exec(value)) {
+              value = match[1] + evalTemplate(ctx, match[2]) + match[3];
+            }
+          }
+          if (value) {
+            log.write(5,'Header ' + hdr + ': ' + maskToken(value) );
+            reqOptions.headers[hdr.toLowerCase()] = value;
+          }
+          else {
+            log.write(3, 'either the name or the value of header is undefined');
           }
         }
-        else {
-          value = req.headers[hdr];
-        }
-        log.write(5,'Header ' + hdr + ': ' + maskToken(value) );
-        reqOptions.headers[hdr.toLowerCase()] = value;
       });
 
       return ctx;
@@ -688,8 +705,10 @@ function invokeOneRequest(context) {
     // log.write('parsed URL :' + JSON.stringify(parsedUrl, null, 2));
 
     if (job.hasOwnProperty('contrivedIp') && job.contrivedIp) {
-      reqOptions.headers['x-random-city'] = job.chosenCity;
       reqOptions.headers['x-forwarded-for'] = job.contrivedIp;
+      if (job.hasOwnProperty('chosenCity') && job.chosenCity) {
+        reqOptions.headers['x-random-city'] = job.chosenCity;
+      }
     }
     else {
       log.write(5,'no contrived IP');
@@ -804,13 +823,16 @@ function runJob(context) {
 
   // generate a random IP address if necessary
   if (state.request === 0 && state.iteration === 0 && state.sequence === 0) {
-    if (!job.hasOwnProperty('geoDistribution') || job.geoDistribution == 1) {
+    if (!job.hasOwnProperty('geoDistribution') || job.geoDistribution === 1) {
       if (!globals.citySelector) {
         p = p.then(retrieveCities, trackFailure);
       }
       p = p.then(contriveIpAddress, trackFailure);
       // Upon failure, no job.contrivedIp gets set in context.
       // This is ok, though. We can still continue.
+    }
+    else if (Array.isArray(job.geoDistribution)) {
+      p = p.then(selectIpAddressFromRestrictedList, trackFailure);
     }
     else {
       p = p.then(function(ctx){

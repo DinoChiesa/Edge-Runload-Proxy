@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<APIProxy revision="3" name="runload">
+<APIProxy revision="3" name="runload-proxy">
     <ConfigurationVersion minorVersion="0" majorVersion="4"/>
     <CreatedAt>1397841517556</CreatedAt>
     <CreatedBy>noreply_admin@apigee.com</CreatedBy>
-    <Description>Load Runner</Description>
-    <DisplayName>runload</DisplayName>
+    <Description>Nodejs Trireme Proxy Load Runner</Description>
+    <DisplayName>runload-proxy</DisplayName>
     <LastModifiedAt>1457650232536</LastModifiedAt>
     <LastModifiedBy>noreply_admin@apigee.com</LastModifiedBy>
     <Policies/>
