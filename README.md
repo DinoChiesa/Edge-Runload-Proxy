@@ -1,9 +1,5 @@
 # runload-proxy
 
-NB: 2019 June 21 THIS WILL SOON STOP WORKING.
-The nodejs target in Apigee Edge is deprecated; you should move to hosted targets.
-
-----
 
 This is an Apigee Edge proxy that lets you generate and run load against a
 different API. This proxy uses a nodejs target to generate outbound HTTP
@@ -31,7 +27,7 @@ customer-managed (Self-managed?) Apigee Edge installation.
 
 ## License
 
-This material is copyright 2014-2016 Apigee Corporation, 2017 Google Inc.
+This material is copyright 2014-2016 Apigee Corporation, 2017-2019 Google LLC.
 and is licensed under the [Apache 2.0 License](LICENSE). This includes all the code as well as the API Proxy configuration.
 
 ## Pre-requisites
@@ -48,7 +44,7 @@ To use as a apiproxy in Edge:
      edit the model.json file to specify the job to run.
 
   2. packup the bundle and deploy it.  You can use the Edge UI for this
-     purpose , or a tool like [pushapi](https://github.com/carloseberhardt/apiploy), or [a nodejs import tool](https://github.com/DinoChiesa/apigee-edge-js/blob/master/examples/importAndDeploy.js), or your own tool.
+     purpose , or [importAndDeploy.js](https://github.com/DinoChiesa/apigee-edge-js/blob/master/examples/importAndDeploy.js), or your own tool.
 
 
 The nodejs process runs forever. It invokes the API, maybe sleeps a little, and then
@@ -56,11 +52,11 @@ does it again. To stop it, you can send a /control action=stop request to the
 proxy, about which you will read more, later in this readme.  Or, undeploy the proxy.
 
 
-
 To use as a command-line tool:
 
-  1. in the apiproxy/resources/node directory,
-     edit the model.json file to specify the job to run.
+  0. cd to  apiproxy/resources/hosted
+
+  1. edit the config/model.json file to specify the job to run.
 
   2. `npm install`
 
@@ -100,24 +96,24 @@ To define a job, you need to write a JSON file.  Here's a very simple example.
           "url" : "/v1/login",
           "method" : "post",
           "payload" : {
-            "username":"{username}",
-            "password":"{password}"
+            "username":"{{username}}",
+            "password":"{{password}}"
           }
         }]
       }]
     }
 
 In English, what this says is: the job will invoke urls on the server at
-https://api.sonoasystems.net:9001. (Don't be confused: This is a fake
+https://api.sonoasystems.net:9001. (This is a fake
 endpoint, just for example purposes.) It will send HTTP headers (Accept
 and content-type) that indicate the request is sending and receiving
 application/json. There will be just one sequence of requests, and in
 that sequence just one request. That request will POST to the url path
 /v1/login . It will provide as a payload, a json object containing a
 username and password. The values for the username and password are
-obtained from the job context.
+obtained from the job context, using handlebars templates.
 
-All the properties in the job definition have case-sensitive names.
+All the properties in the job definition .json file have case-sensitive names.
 
 Running this job would exercise the login function of a fictitious
 sonoasystems API.  The runload proxy defaults to run the job once per
@@ -125,15 +121,15 @@ minute, forever.
 
 The initialContext property on the job provides the initial set of
 context data items. In this case, the job context gets hard-coded login
-credentials. These values will be accessible via "templates" that you
+credentials. These values will be accessible via handlebars "templates" that you
 can apply to headers or urls or payloads on requests. In this example,
 the json payload gets its values from the context. If you wanted to use a
 context value to construct a url path, you could do it with a template,
 this way:
 
-    /v1/test/{href}
+    /v1/test/{{href}}
 
-runload will replace {href} with the value of the href property from the
+runload will replace {{href}} with the value of the href property from the
 context.
 
 The url property in the request specifies a relative or absolute URL. If
@@ -177,8 +173,8 @@ Example of the former:
               },
               "payload": {
                 "grant_type" : "client_credentials",
-                "client_id" : "{client_id}",
-                "client_secret" : "{client_secret}"
+                "client_id" : "{{client_id}}",
+                "client_secret" : "{{client_secret}}"
               },
               ....
 
@@ -190,7 +186,7 @@ Example of the latter:
               "headers" : {
                 "accept" : "application/json",
               },
-              "payload": "grant_type=client_credentials&client_id={client_id}&client_secret={client_secret}",
+              "payload": "grant_type=client_credentials&client_id={{client_id}}&client_secret={{client_secret}}",
               ....
 
 
@@ -227,7 +223,7 @@ Consider this job definition:
     {
       "name": "job2",
       "description": "Exercise APIs exposed by Sonoa",
-      "geoDistribution": 1,
+      "simulateGeoDistribution": 1,
       "defaultProperties": {
         "scheme": "https",
         "host": "api.sonoasystems.net",
@@ -262,18 +258,10 @@ Consider this job definition:
               "password":"password"
             },
             "delayBefore" : 0,
-            "extracts" : [
-              {
-                "description" : "extract the login token",
-                "fn" : "function(obj) {return obj.login.token;}",
-                "valueRef" : "oauth_bearer_token"
-              },
-              {
-                "description" : "extract the user and site hrefs",
-                "fn" : "function(obj) {var re1=new RegExp('^/[^/]+/[^/]+(/.*)$'), m1,m2; m1=re1.exec(obj.login.user.href); m2=re1.exec(obj.login.site.href); return {user:m1[1],site:m2[1]};}",
-                "valueRef" : "hrefs"
-              }
-            ]
+            "extracts" : {
+              "oauth_bearer_token" : "$.login.token",
+              "hrefs" : "{var re1=new RegExp('^/[^/]+/[^/]+(/.*)$'), m1,m2; m1=re1.exec(obj.login.user.href); m2=re1.exec(obj.login.site.href); return {user:m1[1],site:m2[1]};}"
+            }
           }]
         },
         {
@@ -282,19 +270,19 @@ Consider this job definition:
           "delayBetweenIterations" : "Math.floor(Math.random() * 300) + 120",
           "requests" : [
             {
-              "url" : "/v1/ictrl/{hrefs.user}",
+              "url" : "/v1/ictrl/{{hrefs.user}}",
               "method" : "get",
               "headers" : {
-                "authorization" : "Bearer {oauth_bearer_token}"
+                "authorization" : "Bearer {{oauth_bearer_token}}"
               },
               "delayBefore" : 10
             },
             {
               "description" : "retrieve the site",
-              "url" : "/v1/ictrl/{hrefs.site}",
+              "url" : "/v1/ictrl/{{hrefs.site}}",
               "method" : "get",
               "headers" : {
-                "authorization" : "Bearer {oauth_bearer_token}"
+                "authorization" : "Bearer {{oauth_bearer_token}}"
               },
               "delayBefore" : 10
             }
@@ -307,15 +295,17 @@ This job definition adds a few properties: extracts, invocationsPerHour,
 a random number of iterations, delayBetweenIterations, and geoDistribution.
 
 * **extracts**
-  After receiving the response, runLoad calls the functions provided
-  in the 'extracts' array, passing the response. The return values of
-  those functions get placed as additional values in the job context,
-  using the valueRef name. These new values can subsequently be
-  referenced as context values via templates, as described
-  previously. In this example, the oauth_bearer_token is extracted and
-  inserted as a bearer token in all subsequent requests. You can get
-  pretty fancy with the extracts, using them to specify values in the
-  payload or the url path or headers.
+  After receiving the response, the script extracts data as configured in the extracts object. For each
+  key in the object, there are three options:
+    a string set off by double curlies is evaluated as a handlebars template
+    a string set off by single curlies is eval'd as JavaScript
+    otherwise, it's treated as a JSON-path and applied to the payload.
+
+  In each case the result of the operation is placed into the job context, under
+  the given name. In this example, the oauth bearer token is extracted from the
+  JSON payload and then passed in the authorization header in all subsequent
+  requests. You can get pretty fancy with the extracts, using them to specify
+  values in the payload or the url path or headers.
 
 * **invocationsPerHour**
   The top-level property named "invocationsPerHour" holds an array of
@@ -341,16 +331,15 @@ a random number of iterations, delayBetweenIterations, and geoDistribution.
     minute, or about 0.13 transactions per second. Not very much. You
     can do the math yourself for your own job description.
 
-* **geoDistribution**
-  The geoDistribution property is a single truthy value, which
+* **simulateGeoDistribution**
+  a single truthy value, which
   specifies whether the runload script should simulate geo-distributed
   load as the job runs, via the X-Forwarded-For header.  Set this
   property to zero or false in the job definition if you do not want
   geo-distributed load. If you omit the property, or set it to a
   truthy value (true, 1, or any string), you get the default behavior,
   which is an X-forwarded-for header that simulates geo distributed
-  load.  The runLoad script does this by calling out to two lists in
-  App Services to select cities and IP addresses for those cities.
+  load.
 
 * **iterations**
   This job definition also includes multiple sequences with multiple
@@ -412,70 +401,55 @@ Consider this job definition:
         "requests" : [ {
           "url" : "/v1/login",
           "method" : "post",
-          "imports" : [ {
-            "description" : "choose a set of credentials",
-            "fn" : "function(ctx) {return Math.floor(Math.random() * ctx.creds.length);}",
-            "valueRef" : "credNum"
-          }],
-          "headers" : {
-            "authorization" : "Basic {Base64.encode(creds[credNum].username + ':' + creds[credNum].password)}"
+          "imports": {
+             "cred": "{{randomSelect creds}}",
           },
-          "extracts" : [ {
-            "description" : "extract the login token",
-            "fn" : "function(obj,hdr,ctx) {return obj.login.token;}",
-            "valueRef" : "oauth_bearer_token"
-          }]
+          "headers" : {
+            "authorization" : "{{httpbasicauth cred.username cred.password}}"
+          },
+          "extracts" : {
+            "oauth_bearer_token" : "$.login.token"
+          }
         }]
       }]
     }
 
-This one includes a new property on the request - "imports" - which is
-an array. Each element is an object, which includes a function
-definition. The function is code that you provide, which runload will
-run prior to sending out the request. runload injects the return value
-of each import function into the context, where it is available to
-subsequent import functions, or to the template expressions.
+This one includes a new property on the request - "imports".
+Each key in the object specifies a handlebars template
+that gets evaluated.
 
-The imports are similar to the extract functions; the imports run before
-the call and get only the context as a parameter, and not the
-response. In contrast, the extract functions run after the call returns,
-and get three arguments: payload (object), headers (Array of strings),
-and context (object). Both import and extract functions implicitly
+Like the extracts, the imports implicitly
 inject values into the context via their return values:
-whatever you return from those functions is stuffed into a named property on
-the context object. Imports are useful for randomly selecting from a set
-of possible values in the context. For example, for selecting an OAuth token,
-or for selecting a credential to pass to get a token.
+whatever you return from the template or function is stuffed into a named property on
+the context object.
+
+The imports run before
+the call and get only the context as a parameter.
+response. In contrast, the extract functions run after the call returns,
+and get all the objects  in the context, plus  three additional arguments: payload (object), headers (Array of strings),
+and status (int) of the most recently completed request.
+
+Imports are useful for randomly selecting from a set
+of possible values in the context. For example, for selecting from a set of credentials, or IP addresses, or etc.
 
 In this example, the import randomly selects one of the N credentials
-that are available in the initial context. The number is injected into
-the 'credNum' property which will be available in the context. Then, the
-payload is contrived using a template that relies on that credNum value.
+that are available in the initial context.
 
-This example also shows how to use a more complex JavaScript expression
-within a template. In the simple case, the thing between the curlies
-is just the name of a property in the context. In this case though, the
-expression between the curlies is
 
-    Base64.encode(creds[credNum].username + ':' + creds[credNum].password)
+The builtin handlebars functions available in templates are:
 
-This expression gets wrapped into a function, which is evaluated at
-runtime. In this case it will result in a function that looks like:
+- base64 - takes one argument and returns a base64 encoded string of that argument
+- httpbasicauth - takes two arguments and returns a Basic Auth header including the "Basic " prefix.
+- random - takes two numeric arguments and returns a random integer between them `{{random 5 20}}`
+- randomSelect - takes one argument, an array, and selects a random item from it.
+- randomString - takes one optional argument, a length, and returns a string consisting of random letters, of that length. The default length is a random value from 12 to 40.
+- weightedRandomSelect - takes one argument, an array-of-array, and selects an item based on a weighted random approach using the second item of each inner array as the weight.
 
-    function (creds, credNum) {
-      return Base64.encode(creds[credNum].username + ':' + creds[credNum].password);
-    }
+
 
 You can get as complex as you like with the expression. The function
-gets all the context values as named parameters (eg: creds, credNum), so
+gets all the context values as named parameters, so
 your expression can refer to them directly.
-
-This expression shows the use of the Base64 object. The Base64 object
-has 2 methods: encode() and decode(), which do what you think they
-should.
-
-You can use such a complex expression in any payload field, header or
-url, within curlies.
 
 The imports, extracts, and templating means you can create very dynamic
 sequences of API requests, each of which might depend on the results of
@@ -517,140 +491,67 @@ Another example:
         {
           "iterations" : 1,
           "requests" : [ {
-            "imports" : [
-              {
-                "description" : "setup the weighted random selector",
-                "fn" : "function(ctx) {return new WeightedRandomSelector(ctx.developerKeys);}",
-                "valueRef" : "wrs"
-              },
-              {
-                "description" : "choose a key",
-                "fn" : "function(ctx) {return ctx.wrs.select()[0];}",
-                "valueRef" : "key"
-              }],
-            "url" : "/v1/dp/sayhello?arg0={randomName()}&apikey={key}",
+            "imports": {
+              "apikey": "{{weightedRandomSelect apikeys}}",
+              "ip": "{{weightedRandomSelect ips}}",
+              "radius" : "{{random 20 100}}"
+            },
+            "headers" : { "x-forwarded-for" : "{{ip}}" }
+            "url" : "/v1/dp/sayhello?arg0={{radius}}&apikey={{apikey}}",
             "method" : "get"
           }]
         }
       ]
     }
 
+### User-Agent
 
-This example shows the use of a class, WeightedRandomSelector, which is
-available for use within import or extract functions. The constructor
-accepts an array of arrays; the inner array should have 2 items, the
-value, and its weight. The WeightedRandomSelector exposes just one
-method, select(). It randomly selects an item from the array based on
-the supplied weightings. In this case, the API has 3 developer keys,
-and the import selects from them. The first key is chosen 50% of the
-time, the 2nd key 30% of the time, and so on. (The weightings do not
-need to sum to 100.)  wrs.select() tem is the array element, so if you
-want the selected *value*, then you need to use wrs.select()[0].
+To set the user-agent of requests that get sent in, you can do something like this:
 
-This example also shows the use of multiple imports, and the
-randomName() function, which does what you think it does.  It does not
-run any extracts.
+```
+  "requests": [
+    {
+      "imports": {
+        "useragent": "{{weightedRandomSelect useragents}}"
+      },
+```
 
-Just for completeness, you could also structure this job like so:
+...and then use `{{useragent}}` in a header
+
+```
+      "headers" : {
+        "useragents" : "{{useragent}}"
+      }
+```
+
+
+
+### HTTP Basic Auth
+
+To use http basic auth,
+
+```
+      "initialContext" : {
+        "creds" : [
+          {"username":"Chris", "password":"Haljous#"},
+          {"username":"Andrea", "password":"92iu2011"},
+          {"username":"Jordan", "password":"ikindalikeapis@#"}
+        ]
+      },
 
       "sequences" : [
         {
           "iterations" : 1,
-          "requests" : [ {
-            "imports" : [
-              {
-                "description" : "setup the weighted random selector",
-                "fn" : "function(ctx) {return new WeightedRandomSelector(ctx.developerKeys);}",
-                "valueRef" : "wrs"
-              }],
-            "url" : "/v1/dp/sayhello?arg0={randomName()}&apikey={wrs.select()[0]}",
-            "method" : "get"
-          }]
-        }
-      ]
-
-This definition avoids one of the import calls. Instead, it uses a more
-complex expression in the template for the URL. The result is
-equivalent. Which you prefer is entirely up to you.
-
-
-Re-using extracted data items
-================================
-
-Consider this example:
-
-    {
-      "id" : "job5",
-      "description": "drive the EXPE test APIs",
-      "defaultProperties": {
-        "scheme": "http",
-        "host": "api-test.expedia.net",
-        "port": "19001",
-        "headers" : {
-          "Accept" : "application/json"
-        }
-      },
-
-      "geoDistribution" : 1,
-
-      "initialContext" : {
-        "client_id" : "w6aWUphknyBQcwm2kCJIsfzSzNsFQPH8",
-        "client_secret" : "rgypratccbL3ByDc"
-      },
-
-      "invocationsPerHour" : [
-        444, 437, 340, 432, 400, 390, 400, 540,
-        550, 620, 540, 600, 710, 720, 500, 480,
-        480, 620, 701, 870, 830, 702, 703, 500
-      ],
-
-      "sequences" : [
-        {
-          "iterations" : "1",
-          "requests" : [
-            {
-              "url" : "/oauth/client_credentials/accesstoken",
-              "method" : "post",
-              "delayBefore" : 0,
-              "headers" : {
-                "accept" : "application/json",
-                "content-type" : "application/json"
-              },
-              "payload": {
-                "grant_type" : "client_credentials",
-                "client_id" : "{client_id}",
-                "client_secret" : "{client_secret}"
-              },
-              "extracts" : [
-                {
-                  "description" : "extract the oauth token",
-                  "fn" : "function(obj) {return obj.access_token;}",
-                  "valueRef" : "oauth_bearer_token"
-                }
-              ]
+          "requests": [ {
+            "imports": {
+              "cred": "{{randomSelect creds}}"
+            },
+            "headers" : {
+              "authorization" : "{{httpbasicauth cred.username cred.password}}"
             }
-          ]
-        },{
-          "iterations" : "Math.floor(Math.random() * 5) + 3",
-          "requests" : [
-            {
-              "url" : "/v1/loopback/pass",
-              "method" : "get",
-              "headers" : {
-                "authorization" : "Bearer {oauth_bearer_token}"
-              }
-            }
-          ]
-        }
-      ]
-    }
+            ...
+```
 
-This one has a sequence with 2 requests. The first request runs once,
-and requests an access token. The second request runs N times, where N
-is a random value from 3-8. It passes the token appropriately in the
-authorization header.
-
-delayBefore is specified in milliseconds.
 
 
 Varying load by day-of-week
@@ -727,29 +628,17 @@ and set the value conditionally in an import.  Consider this request that condit
         "requests" : [ {
           "url" : "{token_url}",
           "method" : "post",
-          "imports" : [
-            {
-              "description" : "choose a set of credentials",
-              "fn" : "function(ctx) {return Math.floor(Math.random() * ctx.creds.length);}",
-              "valueRef" : "credNum"
-            },
-            {
-              "description" : "set the token URL only if we need a new token. null means no token request.",
-              "fn" : "function(ctx) { var now = (new Date()).valueOf(); if (ctx.stamped_token && ctx.stamped_token.stamp) { var delta = now - ctx.stamped_token.stamp; if (delta<60*58*1000) { return null; } } return '/oauth/client_credential/accesstoken?grant_type=client_credentials'; }",
-              "valueRef" : "token_url"
-            }
-          ],
+          "imports" : {
+              "cred": "{{randomSelect creds}}",
+              "token_url" : "{ var now = (new Date()).valueOf(); if (ctx.stamped_token && ctx.stamped_token.stamp) { var delta = now - ctx.stamped_token.stamp; if (delta<60*58*1000) { return null; } } return '/oauth/client_credential/accesstoken?grant_type=client_credentials'; }"
+          },
           "headers" : {
-            "Authorization" : "Basic {Base64.encode(creds[credNum].username + ':' + creds[credNum].password)}"
+              "authorization" : "{{httpbasicauth cred.username cred.password}}"
           },
           "delayBefore" : 0,
-          "extracts" : [
-            {
-              "description" : "extract the login token with a timestamp",
-              "fn" : "function(obj) { return {token:obj.access_token, stamp: (new Date()).valueOf()}; }",
-              "valueRef" : "stamped_token"
-            }
-          ]
+          "extracts" : {
+              "timestamped_token" : "{ {token:payload.access_token, stamp:(new Date()).valueOf() } }"
+          }
         } ]
       },
 
@@ -761,55 +650,10 @@ The context for a subsequent run (after delay/sleep) gets the existing context, 
 The upshot is, the first time through this request will run and acquire a new token. On subequent runs, the request will not run.  The token will always be available as "stamped_token.token".
 
 
-
-Including Source in the synthentic transactions
-================================
-
-It may be a good idea to include the source of the synthetic transaction in the
-request. When running from within an Apigee Edge proxy, you have the Apigee organization and environment available to you via environment variables.
-To take advantage of this, you could use this:
-
-      "sequences" : [
-        {
-          "iterations" : 1,
-          "requests" : [ {
-            "imports" : [
-              {
-                "description": "source for the request",
-                "fn": "function(ctx) {return process.env.APIGEE_ORGANIZATION + ':' + process.env.APIGEE_ENVIRONMENT;}",
-                "valueRef": "source"
-              }],
-            "url" : "/v1/dp/sayhello",
-            "headers" : { "X-runload-source" : "{source}" },
-            "method" : "get"
-          }]
-        }
-      ]
-
-
-Functions and Objects available to templates
-================================
-
-* **randomName()** - fn, returns a given name with a number suffix. Examples:
-  "Lewis-8938", "Mary-123".
-
-* **selectGivenName()** - fn, returns a given name. ex: "Lewis", "Jin", "Mary".
-
-* **WeightedRandomSelector** - object. The constructor accepts an array of
-  pairs. The first element in each pair is a value, the second is a
-  weight. This object has just one method, select(). Call it to get a
-  value from the list of pairs, selected based on the weightings.  You can
-  use this to vary the key usage, or whatever.
-
-* **Base64** - object. Includes 2 functions: encode() and decode(). They do
-  what you think they should. You can use this to produce an HTTP Basic
-  Auth header in an outbound request.
-
-
 Running as a server
 ========================
 
-This code is set up to run as a nodejs target in an Apigee Edge
+This code is set up to run as a hosted target in an Apigee Edge
 Proxy. It will begin running, and generating load against your targets,
 as soon as you deploy your proxy.
 
@@ -855,13 +699,4 @@ These are the loglevel values:
 * progressively more info
 * 10 = max logging
 
-Possible Errors
-======================
 
-If you see something like this:
-
-```
-*** Error: Cannot find module 'q' Error: Cannot find module 'q' at module.js:340 at module.js:280 at module.js:364 at require (module.js:380) at /organization/environment/api/runLoad.js:76 at module.js:456 at module.js:474 at module.js:356 at module.js:312 at module.js:497 at startup (trireme.js:142) at trireme.js:923
-```
-
-...it's possible you uploaded the runload API proxy with the UI.  In which case you need to call [the Edge Admin API to run `npm install`](http://docs.apigee.com/management/apis/post/organizations/%7Borg_name%7D/apis/%7Bapi_name%7D/revisions/%7Brevision_num%7D/npm-0) to install all the dependencies for the nodejs code.

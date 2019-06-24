@@ -1,4 +1,15 @@
-**/*.*~
+
+**/Icon*
+**/Icon
+*/Icon
+Icon
+
 **/#*.*#
-notes.txt
+**/*.*~
+**/#*#
+**/*~
+
+**/target/
+**/node_modules/
+**/*.class
 

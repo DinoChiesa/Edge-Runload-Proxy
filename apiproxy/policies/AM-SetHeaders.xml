@@ -1,0 +1,10 @@
+<AssignMessage name='AM-SetHeaders'>
+  <AssignTo createNew='false' type='request'/>
+  <Set>
+    <Headers>
+      <Header name='x-apigee-org'>{organization.name}</Header>
+      <Header name='x-apigee-env'>{environment.name}</Header>
+      <Header name='x-apigee-proxy'>{apiproxy.name}</Header>
+    </Headers>
+  </Set>
+</AssignMessage>
