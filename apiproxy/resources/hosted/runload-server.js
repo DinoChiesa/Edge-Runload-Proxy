@@ -8,19 +8,20 @@
 'use strict';
 
 const util = require('util'),
-    process = require('process'),
-    Handlebars = require('handlebars'),
-    jsonpath = require('jsonpath'),
+      process = require('process'),
+      Handlebars = require('handlebars'),
+      jsonpath = require('jsonpath'),
       request = require('./lib/slimNodeHttpClient.js'),
       ipGenerator = require('./lib/ipGenerator.js'),
-    app = require('express')(),
-    bodyParser = require('body-parser'),
-    fs = require('fs'),
-    dayNames = [ 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday' ],
-    oneHourInMs = 60 * 60 * 1000,
-    minSleepTimeInMs = 120,
-    maxIterations = 50,
-    log = new Log();
+      app = require('express')(),
+      bodyParser = require('body-parser'),
+      fs = require('fs'),
+      dayNames = [ 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday' ],
+      oneHourInMs = 60 * 60 * 1000,
+      minSleepTimeInMs = 120,
+      maxIterations = 50,
+      defaultConfigFile = './config/model.json',
+      log = new Log();
 
 var cache = null,
     globals = {},
@@ -28,7 +29,7 @@ var cache = null,
     g = {
       context : null,
       status : {
-        version : '20190516-1534',
+        version : '20190624-1057',
         pid : process.pid,
         nRequests : 0,
         nCycles : 0,
@@ -166,8 +167,8 @@ function resolveExpression(input, defaultValue) {
 
 function getLoadGeneratorSource(){
   let source = ['org', 'env', 'proxy'].map(x => globals[x]).join(':');
-  if (source === '::') {
-    source = process.env.HOSTNAME || process.env.HOST;
+  if ( ! source || source === '::' ) {
+    source = process.env.HOSTNAME || process.env.HOST || 'not-known';
   }
   return source;
 }
@@ -609,6 +610,9 @@ function reportModel (context) {
 
 function kickoff(arg) {
   try {
+    if ( ! fs.existsSync(arg)) {
+      arg = defaultConfigFile;
+    }
     if (fs.existsSync(arg)) {
       console.log(arg);
       g.model = JSON.parse(fs.readFileSync(arg, 'utf8'));
@@ -629,7 +633,7 @@ function kickoff(arg) {
         .catch(trackFailure);
     }
     else {
-      console.log('That file does not exist');
+      console.log('That file does not exist. ('+arg+')');
     }
   }
   catch (exc1) {
@@ -788,10 +792,11 @@ app.all(/^\/.*/, function(request, response) {
 });
 
 var positionalArgs = process.argv.slice(2);
-var modelFilename = positionalArgs[0] || 'config/model.json';
+var modelFilename = positionalArgs[0] || defaultConfigFile;
 var port = process.env.PORT || 5950;
 app.listen(port, function() {
   try {
+    // try to use cache IPC between the instances
     var apigee = require('apigee-access'); // may throw
     cache = apigee.getCache(undefined, { scope: 'application' }); // get the default cache
   }
