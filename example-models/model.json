@@ -1,0 +1,72 @@
+{
+  "id" : "example-model-1",
+  "initialContext": {
+    "org" : "sense-demo1",
+    "env" : "prod",
+    "basepath" : "/sense-demo",
+    "credentials": [
+      ["iY01B73I6mVoOECh8sVIp37cRJYg1mIk:xWqCAecKTO9jdTnp",63],
+      ["3dvwFVegq1fZXGaG4C1Ve3Q9B2FC8sxe:ZA1ML4qv7vN2BJtf",66],
+      ["4xXqhZox4ZNNRRVwTTlNlvIAR1ZmtaDA:fAeHGMzgnMfWrPQa",45],
+      ["j651tUAjvXvg8gVfEJiVCO74T8TrBqxn:BulTBKnWNBX0dqNG",46],
+      ["fBv52pNVkmhgXnXa88FsC8pKdFOxMLmA:YSS9jUQBgc9uyZR8",54],
+      ["TAyl5IiZwQEludTOXJAIxHxdAvCpyk57:K3VwHllGj5puClQ8",59],
+      ["AbtQYx9v0lEffjym6rESZo7evI0XvIwK:AgSh0G1auIjGP52f",57],
+      ["hxQA7bLmrXfyoTANQNLLUYqMhGEHQqVD:91zGd67SZiDoyPdr",43],
+      ["5u5MxjrcrjazFgXYiOlMyO1cKB2GZY5s:9DwIN9JpVcAkO7h8",41],
+      ["kXQ1LfP6v5ofdhDu8DeBkyvNmPAhubxD:5aTw9VeniuaZiSlG",47],
+      ["hwEdwKPWyWvDsaH2oOAwIZYQj5FoSOl5:aiGA7BRD5cQFqxBM",53]
+    ]
+  },
+  "initialLogLevel" : 2,
+  "invocationsPerHour": [
+    1160, 1168, 824, 704, 592, 624, 528, 648,
+    624, 632, 856, 880, 992, 856, 952, 1136,
+    1152, 800, 768, 752, 832, 1128, 1384, 1328 ],
+
+  "variationByDayOfWeek" : [
+    0.725, 0.750, 0.875, 0.825, 0.775, 1.055, 0.974
+  ],
+  "requests": [
+   {
+      "imports": {
+        "cred": "{{weightedRandomSelect credentials}}",
+        "useragent": "{{weightedRandomSelect useragents}}"
+      },
+      "url": "https://{{org}}-{{env}}.apigee.net{{basepath}}/oauth2-cc/token",
+      "method": "POST",
+      "payload": "grant_type=client_credentials",
+      "headers": {
+        "content-type" : "application/x-www-form-urlencoded",
+        "Authorization": "Basic {{base64 cred}}",
+        "user-agent" : "{{useragent}}"
+      },
+      "extracts": {
+        "token": "$.access_token"
+      }
+   },
+    {
+      "iterations": "Math.floor(Math.random() * 2) + 3",
+      "not-iterations": 18,
+      "url": "https://{{org}}-{{env}}.apigee.net{{basepath}}/verify-token/t1",
+      "method": "POST",
+      "payload": {
+        "fish" : "{{randomString}}",
+        "bar" : "{{randomString 20}}"
+      },
+      "headers": {
+        "Authorization": "Bearer {{token}}",
+        "user-agent" : "{{useragent}}"
+      },
+      "extracts": {}
+    },
+    {
+      "imports": {},
+      "url": "https://{{org}}-{{env}}.apigee.net{{basepath}}/load-gen-good/status",
+      "method": "get",
+      "headers": {
+        "user-agent" : "{{useragent}}"
+      }
+    }
+  ]
+}
